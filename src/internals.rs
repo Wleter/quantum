@@ -23,9 +23,9 @@ impl<T> Internals<T> {
         self
     }
 
-    /// Returns the value of a parameter with given name.
-    pub fn get_param(&self, name: &'static str) -> Option<&T> {
-        self.params.get(name)
+    /// Returns the value of a parameter with given name. Panics if no name is found.
+    pub fn get_param(&self, name: &'static str) -> &T {
+        self.params.get(name).unwrap()
     }
 }
 
@@ -37,13 +37,10 @@ impl Internals<Scalable> {
         self
     }
 
-    /// Returns the scaled value of a parameter with given name.
-    pub fn get_value(&self, name: &'static str) -> Option<f64> {
-        if let Some(&param) = self.params.get(name) {
-            Some(param.0 * param.1)
-        } else {
-            None
-        }
+    /// Returns the scaled value of a parameter with given name. Panics if no name is found.
+    pub fn get_value(&self, name: &'static str) -> f64 {
+        let param = self.params.get(name).unwrap();
+        param.0 * param.1
     }
 
     /// Set a scale of a parameter with given name.

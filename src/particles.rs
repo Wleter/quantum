@@ -12,7 +12,7 @@ pub struct Particles {
 }
 
 impl Particles {
-    /// Creates two particle composition with given collision energy.
+    /// Creates two particle composition with given collision energy inserted inside `internals` as "energy".
     pub fn new_pair(
         first_particle: Particle,
         second_particle: Particle,
@@ -25,7 +25,7 @@ impl Particles {
         particles_map.insert(second_particle.name().to_string(), second_particle);
 
         let mut internals = Internals::new();
-        internals.insert_value("collision_energy", energy);
+        internals.insert_value("energy", energy);
 
         Self {
             particles: particles_map,
@@ -51,9 +51,9 @@ impl Particles {
         }
     }
 
-    /// Gets the mutable reference to particle with given name.
-    pub fn particle_mut(&mut self, name: &str) -> Option<&mut Particle> {
-        self.particles.get_mut(name)
+    /// Gets the mutable reference to particle with given name. Panics if no particle is found.
+    pub fn particle_mut(&mut self, name: &str) -> &mut Particle {
+        self.particles.get_mut(name).unwrap()
     }
 
     /// Sets scale of the reduced mass by given scale.
