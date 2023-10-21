@@ -31,6 +31,7 @@ impl<T> Internals<T> {
 
 impl Internals<Scalable> {
     /// Adds a parameter with given name and value and returns a mutable reference to self.
+    /// If the parameter already exists, it is overwritten.
     pub fn insert_value(&mut self, name: &'static str, value: f64) -> &mut Self {
         self.params.insert(name, (value, 0.0));
 
@@ -44,16 +45,9 @@ impl Internals<Scalable> {
     }
 
     /// Set a scale of a parameter with given name.
-    pub fn set_value_scale(&mut self, name: &'static str, scale: f64) {
+    pub fn set_scaling(&mut self, name: &'static str, scale: f64) {
         if let Some(&mut mut param) = self.params.get_mut(name) {
             param.1 = scale;
-        }
-    }
-
-    /// Scales a parameter with given name by given scaling factor. Can be used multiple times.
-    pub fn scale_value(&mut self, name: &'static str, scaling: f64) {
-        if let Some(&mut mut param) = self.params.get_mut(name) {
-            param.1 *= scaling;
         }
     }
 }
