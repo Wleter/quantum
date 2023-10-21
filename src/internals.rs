@@ -44,10 +44,9 @@ impl Internals<Scalable> {
         param.0 * param.1
     }
 
-    /// Set a scale of a parameter with given name.
+    /// Set a scale of a parameter with given name. Panics if no name is found.
     pub fn set_scaling(&mut self, name: &'static str, scale: f64) {
-        if let Some(&mut mut param) = self.params.get_mut(name) {
-            param.1 = scale;
-        }
+        let param = self.params.get_mut(name).unwrap();
+        param.1 = scale;
     }
 }
