@@ -56,15 +56,9 @@ impl Particles {
         self.particles.get_mut(name).unwrap()
     }
 
-    /// Sets scale of the reduced mass by given scale.
-    pub fn set_scale_red_mass(&mut self, scale: f64) {
-        self.reduced_mass.1 = scale;
-    }
-
-
-    /// Scale the reduced mass by given scaling factor. Can be used multiple times.
+    /// Sets scale of the reduced mass.
     pub fn scale_red_mass(&mut self, scaling: f64) {
-        self.reduced_mass.1 *= scaling;
+        self.reduced_mass.1 = scaling;
     }
 
     /// Gets the reduced mass.
