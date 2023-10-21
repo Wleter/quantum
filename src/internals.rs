@@ -33,7 +33,7 @@ impl Internals<Scalable> {
     /// Adds a parameter with given name and value and returns a mutable reference to self.
     /// If the parameter already exists, it is overwritten.
     pub fn insert_value(&mut self, name: &'static str, value: f64) -> &mut Self {
-        self.params.insert(name, (value, 0.0));
+        self.params.insert(name, (value, 1.0));
 
         self
     }
