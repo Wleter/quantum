@@ -3,6 +3,7 @@ pub mod particle;
 pub mod particle_factory;
 pub mod units;
 pub mod particles;
+pub mod problem_selector;
 
 #[cfg(test)]
 mod tests {
