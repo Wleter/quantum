@@ -6,8 +6,9 @@ use crate::{particle::Particle, internals::{Internals, Scalable}};
 #[derive(Default, Clone)]
 pub struct Particles {
     particles: HashMap<String, Particle>,
+    particle_count: usize,
+    
     reduced_mass: Scalable,
-
     pub internals: Internals<Scalable>
 }
 
@@ -29,6 +30,7 @@ impl Particles {
 
         Self {
             particles: particles_map,
+            particle_count: 2,
             reduced_mass: (1.0 / inverse_reduced_mass, 1.0),
             internals,
         }
@@ -36,7 +38,7 @@ impl Particles {
 
     /// Creates a particle composition given a vector of particles.
     pub fn new_custom(particles: Vec<Particle>) -> Self {
-
+        let particle_count = particles.len();
         let inverse_reduced_mass = particles.iter().fold(0.0, |acc, particle| acc + 1.0 / particle.mass);
 
         let mut particles_map = HashMap::<String, Particle>::new();
@@ -46,6 +48,7 @@ impl Particles {
 
         Self {
             particles: particles_map,
+            particle_count,
             reduced_mass: (1.0 / inverse_reduced_mass, 1.0),
             internals: Internals::new()
         }
@@ -54,6 +57,10 @@ impl Particles {
     /// Gets the mutable reference to particle with given name. Panics if no particle is found.
     pub fn particle_mut(&mut self, name: &str) -> &mut Particle {
         self.particles.get_mut(name).unwrap()
+    }
+
+    pub fn particle_count(&self) -> usize {
+        self.particle_count
     }
 
     /// Sets scale of the reduced mass.
