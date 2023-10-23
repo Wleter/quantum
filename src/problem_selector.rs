@@ -30,18 +30,8 @@ pub trait ProblemSelector {
         match arg {
             Some(arg) => {
                 if arg == "-1" {
-                    args.push_front("-1".to_string());
-                    for (i, _) in Self::list().iter().enumerate() {
-                        let result = panic::catch_unwind(|| {
-                            Self::methods(&i.to_string(), &mut args.clone())
-                        });
-
-                        if result.is_err() {
-                            println!("Problem {} failed", i);
-                        }
-                    }
-
-                    return;
+                    select_many(&Self::list(), Self::methods);
+                    return
                 }
 
                 Self::methods(&arg.to_string(), args)
@@ -61,21 +51,25 @@ pub trait ProblemSelector {
                 let input = input.trim();
 
                 if input == "-1" {
-                    args.push_front("-1".to_string());
-                    for (i, _) in problems.iter().enumerate() {
-                        let result = panic::catch_unwind(|| {
-                            Self::methods(&i.to_string(), &mut args.clone())
-                        });
-
-                        if result.is_err() {
-                            println!("Problem {} failed", i);
-                        }
-                    }
-
-                    return;
+                    select_many(&Self::list(), Self::methods);
+                    return
                 }
 
-                Self::methods(&input.trim(), args)
+                Self::methods(&input, args)
+            }
+        }
+
+        fn select_many(list: &Vec<&'static str>, methods: impl Fn(&str, &mut VecDeque<String>) -> () + std::panic::RefUnwindSafe) {
+            let args = VecDeque::from(vec!["-1".to_string()]);
+
+            for (i, _) in list.iter().enumerate() {
+                let result = panic::catch_unwind(|| {
+                    (methods)(&i.to_string(), &mut args.clone())
+                });
+
+                if result.is_err() {
+                    println!("Problem {} failed", i);
+                }
             }
         }
     }
