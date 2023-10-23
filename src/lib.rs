@@ -1,9 +1,9 @@
 pub mod internals;
 pub mod particle;
 pub mod particle_factory;
-pub mod units;
 pub mod particles;
 pub mod problem_selector;
+pub mod units;
 
 #[cfg(test)]
 mod tests {
@@ -19,7 +19,7 @@ mod tests {
         particle.internals.insert_value("test value", value);
         assert_eq!(particle.internals.get_value("test value"), value);
         assert_eq!(*particle.internals.get_param("test value"), (value, 1.0));
-        
+
         particle.internals.set_scaling("test value", 2.0);
         assert_eq!(particle.internals.get_value("test value"), value * 2.0);
 
@@ -34,11 +34,21 @@ mod tests {
         let energy = 100.0;
 
         let mut composition = particles::Particles::new_pair(particle1, particle2, energy);
-        assert_eq!(composition.particle_mut("Ne").name(),"Ne");
+        assert_eq!(composition.particle_mut("Ne").name(), "Ne");
 
         let value = 234111.234;
-        composition.particle_mut("Ne").internals.insert_value("test value", value);
-        assert_eq!(composition.particle_mut("Ne").internals.get_value("test value"), value);
+        composition
+            .particle_mut("Ne")
+            .internals
+            .insert_value("test value", value);
+        
+        assert_eq!(
+            composition
+                .particle_mut("Ne")
+                .internals
+                .get_value("test value"),
+            value
+        );
 
         assert_eq!(composition.internals.get_value("energy"), energy);
         assert_eq!(*composition.internals.get_param("energy"), (energy, 1.0));

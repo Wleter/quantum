@@ -1,24 +1,23 @@
 use std::collections::HashMap;
 
-use crate::{particle::Particle, internals::{Internals, Scalable}};
+use crate::{
+    internals::{Internals, Scalable},
+    particle::Particle,
+};
 
 /// Struct to hold information about a particle composition.
 #[derive(Default, Clone)]
 pub struct Particles {
     particles: HashMap<String, Particle>,
     particle_count: usize,
-    
+
     reduced_mass: Scalable,
-    pub internals: Internals<Scalable>
+    pub internals: Internals<Scalable>,
 }
 
 impl Particles {
     /// Creates two particle composition with given collision energy inserted inside `internals` as "energy".
-    pub fn new_pair(
-        first_particle: Particle,
-        second_particle: Particle,
-        energy: f64,
-    ) -> Self {
+    pub fn new_pair(first_particle: Particle, second_particle: Particle, energy: f64) -> Self {
         let inverse_reduced_mass: f64 = 1.0 / first_particle.mass + 1.0 / second_particle.mass;
 
         let mut particles_map = HashMap::<String, Particle>::new();
@@ -39,7 +38,9 @@ impl Particles {
     /// Creates a particle composition given a vector of particles.
     pub fn new_custom(particles: Vec<Particle>) -> Self {
         let particle_count = particles.len();
-        let inverse_reduced_mass = particles.iter().fold(0.0, |acc, particle| acc + 1.0 / particle.mass);
+        let inverse_reduced_mass = particles
+            .iter()
+            .fold(0.0, |acc, particle| acc + 1.0 / particle.mass);
 
         let mut particles_map = HashMap::<String, Particle>::new();
         for particle in particles {
@@ -50,7 +51,7 @@ impl Particles {
             particles: particles_map,
             particle_count,
             reduced_mass: (1.0 / inverse_reduced_mass, 1.0),
-            internals: Internals::new()
+            internals: Internals::new(),
         }
     }
 

@@ -6,18 +6,18 @@ pub type Scalable = (f64, f64);
 /// Used to store information about a particle and composition of particles.
 #[derive(Default, Clone)]
 pub struct Internals<T> {
-    params: HashMap<&'static str, T>
+    params: HashMap<&'static str, T>,
 }
 
 impl<T> Internals<T> {
     pub fn new() -> Self {
-        Internals { 
-            params: HashMap::new() 
+        Internals {
+            params: HashMap::new(),
         }
     }
 
     /// Adds a parameter with given name and value and returns a mutable reference to self.
-    pub fn insert_param(&mut self, name: &'static str, value: T) -> &mut Self  {
+    pub fn insert_param(&mut self, name: &'static str, value: T) -> &mut Self {
         self.params.insert(name, value);
 
         self

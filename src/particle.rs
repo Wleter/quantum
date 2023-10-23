@@ -1,12 +1,12 @@
 use crate::internals::{Internals, Scalable};
 
-/// Struct to hold information about a particle. 
+/// Struct to hold information about a particle.
 /// To create a predefined particle use [`crate::particle_factory`].
 #[derive(Default, Clone)]
 pub struct Particle {
     name: String,
     pub mass: f64,
-    pub internals: Internals<Scalable>
+    pub internals: Internals<Scalable>,
 }
 
 impl Particle {
@@ -15,7 +15,7 @@ impl Particle {
         Particle {
             name: name.to_string(),
             mass,
-            internals: Internals::new()
+            internals: Internals::new(),
         }
     }
 
