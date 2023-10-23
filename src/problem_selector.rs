@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+use std::{collections::VecDeque, panic};
 
 /// Gets the arguments from the command line and returns them as a VecDeque
 pub fn get_args() -> VecDeque<String> {
@@ -32,7 +32,13 @@ pub trait ProblemSelector {
                 if arg == "-1" {
                     args.push_front("-1".to_string());
                     for (i, _) in Self::list().iter().enumerate() {
-                        Self::methods(&i.to_string(), args);
+                        let result = panic::catch_unwind(|| {
+                            Self::methods(&i.to_string(), &mut args.clone())
+                        });
+
+                        if result.is_err() {
+                            println!("Problem {} failed", i);
+                        }
                     }
 
                     return;
@@ -57,7 +63,13 @@ pub trait ProblemSelector {
                 if input == "-1" {
                     args.push_front("-1".to_string());
                     for (i, _) in problems.iter().enumerate() {
-                        Self::methods(&i.to_string(), args);
+                        let result = panic::catch_unwind(|| {
+                            Self::methods(&i.to_string(), &mut args.clone())
+                        });
+
+                        if result.is_err() {
+                            println!("Problem {} failed", i);
+                        }
                     }
 
                     return;

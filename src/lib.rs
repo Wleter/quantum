@@ -41,7 +41,7 @@ mod tests {
             .particle_mut("Ne")
             .internals
             .insert_value("test value", value);
-        
+
         assert_eq!(
             composition
                 .particle_mut("Ne")
