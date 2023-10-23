@@ -1,8 +1,11 @@
 use std::collections::VecDeque;
 
+/// Gets the arguments from the command line and returns them as a VecDeque
 pub fn get_args() -> VecDeque<String> {
     let mut args = std::env::args();
+    // get rid of the first argument which is the program name
     args.next();
+
     args.collect()
 }
 
