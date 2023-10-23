@@ -1,5 +1,11 @@
 use std::collections::VecDeque;
 
+pub fn get_args() -> VecDeque<String> {
+    let mut args = std::env::args();
+    args.next();
+    args.collect()
+}
+
 /// Trait for selecting a problem to run
 pub trait ProblemSelector {
     /// Name of the problem that will be displayed as `"Chose {Self::NAME} problem"`
