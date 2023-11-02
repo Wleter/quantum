@@ -5,6 +5,7 @@ pub mod particles;
 pub mod problem_selector;
 pub mod units;
 pub mod saving;
+pub mod utility;
 
 #[cfg(test)]
 mod tests {
