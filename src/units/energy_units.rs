@@ -8,6 +8,8 @@ pub enum EnergyUnit {
     Au,
     Kelvin,
     CmInv,
+    MHz,
+    GHz,
 }
 
 impl EnergyUnit {
@@ -16,6 +18,8 @@ impl EnergyUnit {
             EnergyUnit::Au => 1.0,
             EnergyUnit::Kelvin => 3.1668105e-6,
             EnergyUnit::CmInv => 219474.63,
+            EnergyUnit::MHz => 1.51982850071586e-10,
+            EnergyUnit::GHz => 1.51982850071586e-07,
         }
     }
 
@@ -37,6 +41,20 @@ impl EnergyUnit {
         match self {
             EnergyUnit::Au => energy / EnergyUnit::Kelvin.to_au_mul(),
             _ => EnergyUnit::Au.to_kelvin(self.to_au(energy)),
+        }
+    }
+
+    pub fn to_mega_hz(&self, energy: f64) -> f64 {
+        match self {
+            EnergyUnit::Au => energy / EnergyUnit::MHz.to_au_mul(),
+            _ => EnergyUnit::Au.to_mega_hz(self.to_au(energy)),
+        }
+    }
+
+    pub fn to_giga_hz(&self, energy: f64) -> f64 {
+        match self {
+            EnergyUnit::Au => energy / EnergyUnit::GHz.to_au_mul(),
+            _ => EnergyUnit::Au.to_giga_hz(self.to_au(energy)),
         }
     }
 }
