@@ -8,6 +8,7 @@ pub fn create_atom(name: &str) -> Option<Particle> {
         "Na23" => MassUnit::Mn.to_au(22.989770),
         "K40" => MassUnit::Mn.to_au(39.963707),
         "Rb85" => MassUnit::Mn.to_au(84.911789),
+        "Rb87" => MassUnit::Mn.to_au(86.90918053),
         "Cs133" => MassUnit::Mn.to_au(132.905447),
         _ => return None,
     };
