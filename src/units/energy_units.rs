@@ -17,7 +17,7 @@ impl EnergyUnit {
         match self {
             EnergyUnit::Au => 1.0,
             EnergyUnit::Kelvin => 3.1668105e-6,
-            EnergyUnit::CmInv => 219474.63,
+            EnergyUnit::CmInv => 1.0 / 219474.63,
             EnergyUnit::MHz => 1.51982850071586e-10,
             EnergyUnit::GHz => 1.51982850071586e-07,
         }
