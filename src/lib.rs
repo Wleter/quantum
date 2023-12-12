@@ -9,6 +9,8 @@ pub mod utility;
 
 #[cfg(test)]
 mod tests {
+    use crate::units::energy_units::{Kelvin, Energy};
+
     use super::*;
     #[test]
     fn particle_creation() {
@@ -33,7 +35,7 @@ mod tests {
     fn particle_composition() {
         let particle1 = particle_factory::create_atom("Ne").unwrap();
         let particle2 = particle_factory::create_atom("Li6").unwrap();
-        let energy = 100.0;
+        let energy = Energy::new(100.0, Kelvin);
 
         let mut composition = particles::Particles::new_pair(particle1, particle2, energy);
         assert_eq!(composition.particle_mut("Ne").name(), "Ne");
@@ -52,10 +54,10 @@ mod tests {
             value
         );
 
-        assert_eq!(composition.internals.get_value("energy"), energy);
-        assert_eq!(*composition.internals.get_param("energy"), (energy, 1.0));
+        assert_eq!(composition.internals.get_value("energy"), energy.to_au());
+        assert_eq!(*composition.internals.get_param("energy"), (energy.to_au(), 1.0));
         composition.internals.set_scaling("energy", 2.0);
-        assert_eq!(composition.internals.get_value("energy"), energy * 2.0);
+        assert_eq!(composition.internals.get_value("energy"), energy.to_au() * 2.0);
 
         composition.internals.insert_value("test value", value);
         assert_eq!(composition.internals.get_value("test value"), value);

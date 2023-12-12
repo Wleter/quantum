@@ -13,7 +13,7 @@ pub fn create_atom(name: &str) -> Option<Particle> {
         _ => return None,
     };
 
-    Some(Particle::new(name, mass.to_au()))
+    Some(Particle::new(name, mass))
 }
 
 pub fn create_molecule(name: &str) -> Option<Particle> {
@@ -27,7 +27,7 @@ pub fn create_molecule(name: &str) -> Option<Particle> {
         _ => return None,
     };
 
-    let mut particle = Particle::new(name, mass.to_au());
+    let mut particle = Particle::new(name, mass);
     particle.internals.insert_value("rot_const", rot_const);
 
     Some(particle)

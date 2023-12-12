@@ -7,6 +7,7 @@ use super::Unit;
 /// let energy_kelvin: Energy = Energy::new(1.0, Kelvin);
 /// let energy_cm_inv: Energy = energy_kelvin.to(CmInv);
 /// let energy = energy_kelvin.to_au();
+#[derive(Debug, Copy, Clone)]
 pub struct Energy<U: Unit> {
     pub value: f64,
     pub unit: U,
@@ -29,24 +30,28 @@ impl<U: Unit> Energy<U> {
     }
 }
 
+#[derive(Copy, Clone)]
 pub struct Kelvin;
 #[allow(dead_code)]
 impl Unit for Kelvin {
     const TO_AU_MUL: f64 = 3.1668105e-6;
 }
 
+#[derive(Copy, Clone)]
 pub struct CmInv;
 #[allow(dead_code)]
 impl Unit for CmInv {
     const TO_AU_MUL: f64 = 4.5563352812e-6;
 }
 
+#[derive(Copy, Clone)]
 pub struct MHz;
 #[allow(dead_code)]
 impl Unit for MHz {
     const TO_AU_MUL: f64 = 1.51982850071586e-10;
 }
 
+#[derive(Copy, Clone)]
 pub struct GHz;
 #[allow(dead_code)]
 impl Unit for GHz {

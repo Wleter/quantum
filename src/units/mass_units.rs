@@ -22,6 +22,7 @@ impl<U: Unit> Mass<U> {
     }
 }
 
+#[derive(Copy, Clone)]
 pub struct Dalton;
 #[allow(dead_code)]
 impl Unit for Dalton {

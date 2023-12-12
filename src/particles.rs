@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::{
     internals::{Internals, Scalable},
-    particle::Particle,
+    particle::Particle, units::{energy_units::Energy, Unit},
 };
 
 /// Struct to hold information about a particle composition.
@@ -17,7 +17,7 @@ pub struct Particles {
 
 impl Particles {
     /// Creates two particle composition with given collision energy inserted inside `internals` as "energy".
-    pub fn new_pair(first_particle: Particle, second_particle: Particle, energy: f64) -> Self {
+    pub fn new_pair<U: Unit>(first_particle: Particle, second_particle: Particle, energy: Energy<U>) -> Self {
         let inverse_reduced_mass: f64 = 1.0 / first_particle.mass + 1.0 / second_particle.mass;
 
         let mut particles_map = HashMap::<String, Particle>::new();
@@ -25,7 +25,7 @@ impl Particles {
         particles_map.insert(second_particle.name().to_string(), second_particle);
 
         let mut internals = Internals::new();
-        internals.insert_value("energy", energy);
+        internals.insert_value("energy", energy.to_au());
 
         Self {
             particles: particles_map,

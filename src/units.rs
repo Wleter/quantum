@@ -2,7 +2,7 @@ pub mod energy_units;
 pub mod mass_units;
 
 /// Trait for units that can be converted to atomic units.
-pub trait Unit {
+pub trait Unit: Copy + Clone {
     const TO_AU_MUL: f64;
 
     fn to_au(&self, value: f64) -> f64 {
@@ -10,7 +10,9 @@ pub trait Unit {
     }
 }
 
+#[derive(Copy, Clone)]
 pub struct Au;
+
 impl Unit for Au {
     const TO_AU_MUL: f64 = 1.0;
 }
