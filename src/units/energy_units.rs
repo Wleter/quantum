@@ -3,9 +3,9 @@ use super::Unit;
 /// Enum for representing energy unit values 
 /// # Examples
 /// ```
-/// use quantum::units::energy_units::{Energy, Kelvin, CmInv}};
-/// let energy_kelvin: Energy = Energy::new(1.0, Kelvin);
-/// let energy_cm_inv: Energy = energy_kelvin.to(CmInv);
+/// use quantum::units::energy_units::{Energy, Kelvin, CmInv};
+/// let energy_kelvin: Energy<_> = Energy::new(1.0, Kelvin);
+/// let energy_cm_inv: Energy<_> = energy_kelvin.to(CmInv);
 /// let energy = energy_kelvin.to_au();
 #[derive(Debug, Copy, Clone)]
 pub struct Energy<U: Unit> {
@@ -59,12 +59,6 @@ impl Unit for GHz {
 }
 
 
-/// Enum for energy unit conversion
-/// # Examples
-/// ```
-/// use quantum::units::energy_units::EnergyUnit;
-/// let energy_kelvin = 1.0;
-/// let energy_au = EnergyUnit::Kelvin.to_au(energy_kelvin);
 #[deprecated(note = "Use Energy struct instead")]
 pub enum EnergyUnit {
     Au,

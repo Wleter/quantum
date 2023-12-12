@@ -29,12 +29,6 @@ impl Unit for Dalton {
     const TO_AU_MUL: f64 = 1822.88839;
 }
 
-/// Enum for mass unit conversion
-/// # Examples
-/// ```
-/// use quantum::units::mass_units::MassUnit;
-/// let mass_mn = 1.0;
-/// let mass_au = MassUnit::Mn.to_au(mass_mn);
 #[deprecated(note = "Use Mass struct instead")]
 pub enum MassUnit {
     Au,
