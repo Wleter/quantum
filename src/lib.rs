@@ -35,7 +35,7 @@ mod tests {
     fn particle_composition() {
         let particle1 = particle_factory::create_atom("Ne").unwrap();
         let particle2 = particle_factory::create_atom("Li6").unwrap();
-        let energy = Energy::new(100.0, Kelvin);
+        let energy = Energy(100.0, Kelvin);
 
         let mut composition = particles::Particles::new_pair(particle1, particle2, energy);
         assert_eq!(composition.particle_mut("Ne").name(), "Ne");

@@ -39,6 +39,6 @@ pub fn unit_linspace<U: Unit>(start: Energy<U>, end: Energy<U>, n: usize) -> Vec
     
     linspace(start_au, end_au, n)
         .into_iter()
-        .map(|x| Energy::new(x, Au).to(start.unit))
+        .map(|x| Energy(x, Au).to(start.unit()))
         .collect()
 }

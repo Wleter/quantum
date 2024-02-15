@@ -1,8 +1,9 @@
 pub mod energy_units;
 pub mod mass_units;
+pub mod distance_units;
 
 /// Trait for units that can be converted to atomic units.
-pub trait Unit: Copy + Clone {
+pub trait Unit: Copy + Clone + Sized {
     const TO_AU_MUL: f64;
 
     fn to_au(&self, value: f64) -> f64 {

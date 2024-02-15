@@ -1,24 +1,31 @@
 use super::Unit;
 
-pub struct Mass<U: Unit> {
-    pub value: f64,
-    pub unit: U,
-}
+/// Struct for representing mass unit values 
+/// # Examples
+/// ```
+/// use quantum::units::{Au, mass_units::{Mass, Dalton}};
+/// let mass_dalton = Mass(1.0, Dalton);
+/// let mass_au = mass_dalton.to(Au);
+/// let mass = mass_dalton.to_au();
+/// assert_eq!(mass, mass_au.value())
+#[derive(Debug, Copy, Clone)]
+pub struct Mass<U: Unit>(pub f64, pub U);
 
 impl<U: Unit> Mass<U> {
-    pub fn new(value: f64, unit: U) -> Self {
-        Self { value, unit }
-    }
-
     pub fn to_au(&self) -> f64 {
-        self.unit.to_au(self.value)
+        self.1.to_au(self.0)
     }
 
     pub fn to<V: Unit>(&self, unit: V) -> Mass<V> {
-        Mass {
-            value: self.unit.to_au(self.value) / unit.to_au(1.0),
-            unit,
-        }
+        Mass(self.1.to_au(self.0) / unit.to_au(1.0), unit)
+    }
+
+    pub fn value(&self) -> f64 {
+        self.0
+    }
+
+    pub fn unit(&self) -> U {
+        self.1
     }
 }
 
@@ -27,39 +34,4 @@ pub struct Dalton;
 #[allow(dead_code)]
 impl Unit for Dalton {
     const TO_AU_MUL: f64 = 1822.88839;
-}
-
-#[deprecated(note = "Use Mass struct instead")]
-pub enum MassUnit {
-    Au,
-    Mn,
-}
-
-
-#[deprecated(note = "Use Mass struct instead")]
-#[allow(warnings)]
-impl MassUnit {
-    #[deprecated(note = "Use Mass struct instead")]
-    fn to_au_mul(&self) -> f64 {
-        match self {
-            MassUnit::Au => 1.0,
-            MassUnit::Mn => 1822.88839,
-        }
-    }
-
-    #[deprecated(note = "Use Mass struct instead")]
-    pub fn to_au(&self, mass: f64) -> f64 {
-        match self {
-            MassUnit::Au => mass,
-            _ => mass * self.to_au_mul(),
-        }
-    }
-
-    #[deprecated(note = "Use Mass struct instead")]
-    pub fn to_mn(&self, mass: f64) -> f64 {
-        match self {
-            MassUnit::Au => mass / MassUnit::Mn.to_au_mul(),
-            _ => MassUnit::Au.to_mn(self.to_au(mass)),
-        }
-    }
 }

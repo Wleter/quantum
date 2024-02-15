@@ -10,7 +10,7 @@ pub struct Particle {
 }
 
 impl Particle {
-    /// Creates new particle with given name, mass
+    /// Creates new particle with given name and mass
     pub fn new<U: Unit>(name: &str, mass: Mass<U>) -> Self {
         Particle {
             name: name.to_string(),
