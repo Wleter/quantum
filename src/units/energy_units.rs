@@ -1,6 +1,6 @@
 use super::Unit;
 
-/// Struct for representing energy unit values 
+/// Struct for representing energy unit values
 /// # Examples
 /// ```
 /// use quantum::units::energy_units::{Energy, Kelvin, CmInv};

@@ -31,7 +31,7 @@ pub trait ProblemSelector {
             Some(arg) => {
                 if arg == "-1" {
                     select_many(&Self::list(), Self::methods);
-                    return
+                    return;
                 }
 
                 Self::methods(&arg.to_string(), args)
@@ -52,20 +52,21 @@ pub trait ProblemSelector {
 
                 if input == "-1" {
                     select_many(&Self::list(), Self::methods);
-                    return
+                    return;
                 }
 
                 Self::methods(&input, args)
             }
         }
 
-        fn select_many(list: &Vec<&'static str>, methods: impl Fn(&str, &mut VecDeque<String>) -> () + std::panic::RefUnwindSafe) {
+        fn select_many(
+            list: &Vec<&'static str>,
+            methods: impl Fn(&str, &mut VecDeque<String>) -> () + std::panic::RefUnwindSafe,
+        ) {
             let args = VecDeque::from(vec!["-1".to_string()]);
 
             for (i, _) in list.iter().enumerate() {
-                let result = panic::catch_unwind(|| {
-                    (methods)(&i.to_string(), &mut args.clone())
-                });
+                let result = panic::catch_unwind(|| (methods)(&i.to_string(), &mut args.clone()));
 
                 if result.is_err() {
                     println!("Problem {} failed", i);

@@ -1,6 +1,6 @@
 use super::Unit;
 
-/// Struct for representing distance unit values 
+/// Struct for representing distance unit values
 /// # Examples
 /// ```
 /// use quantum::units::{Au, distance_units::{Distance, Angstrom}};

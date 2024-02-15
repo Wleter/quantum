@@ -1,4 +1,7 @@
-use crate::{particle::Particle, units::mass_units::{Mass, Dalton}};
+use crate::{
+    particle::Particle,
+    units::mass_units::{Dalton, Mass},
+};
 
 pub fn create_atom(name: &str) -> Option<Particle> {
     let mass = match name {

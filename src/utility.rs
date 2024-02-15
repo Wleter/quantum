@@ -1,6 +1,6 @@
 use std::f64::consts::FRAC_PI_2;
 
-use crate::units::{energy_units::Energy, Unit, Au};
+use crate::units::{energy_units::Energy, Au, Unit};
 
 pub fn asymptotic_bessel_j(x: f64, l: usize) -> f64 {
     (x - FRAC_PI_2 * (l as f64)).sin()
@@ -36,7 +36,7 @@ pub fn linspace(start: f64, end: f64, n: usize) -> Vec<f64> {
 pub fn unit_linspace<U: Unit>(start: Energy<U>, end: Energy<U>, n: usize) -> Vec<Energy<U>> {
     let start_au = start.to_au();
     let end_au = end.to_au();
-    
+
     linspace(start_au, end_au, n)
         .into_iter()
         .map(|x| Energy(x, Au).to(start.unit()))

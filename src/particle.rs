@@ -1,4 +1,7 @@
-use crate::{internals::{Internals, Scalable}, units::{mass_units::Mass, Unit}};
+use crate::{
+    internals::{Internals, Scalable},
+    units::{mass_units::Mass, Unit},
+};
 
 /// Struct to hold information about a particle.
 /// To create a predefined particle use [`crate::particle_factory`].

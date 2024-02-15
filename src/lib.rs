@@ -3,13 +3,13 @@ pub mod particle;
 pub mod particle_factory;
 pub mod particles;
 pub mod problem_selector;
-pub mod units;
 pub mod saving;
+pub mod units;
 pub mod utility;
 
 #[cfg(test)]
 mod tests {
-    use crate::units::energy_units::{Kelvin, Energy};
+    use crate::units::energy_units::{Energy, Kelvin};
 
     use super::*;
     #[test]
@@ -38,26 +38,34 @@ mod tests {
         let energy = Energy(100.0, Kelvin);
 
         let mut composition = particles::Particles::new_pair(particle1, particle2, energy);
-        assert_eq!(composition.particle_mut("Ne").name(), "Ne");
+        assert_eq!(composition.particle_mut("Ne").unwrap().name(), "Ne");
 
         let value = 234111.234;
         composition
             .particle_mut("Ne")
+            .unwrap()
             .internals
             .insert_value("test value", value);
 
         assert_eq!(
             composition
                 .particle_mut("Ne")
+                .unwrap()
                 .internals
                 .get_value("test value"),
             value
         );
 
         assert_eq!(composition.internals.get_value("energy"), energy.to_au());
-        assert_eq!(*composition.internals.get_param("energy"), (energy.to_au(), 1.0));
+        assert_eq!(
+            *composition.internals.get_param("energy"),
+            (energy.to_au(), 1.0)
+        );
         composition.internals.set_scaling("energy", 2.0);
-        assert_eq!(composition.internals.get_value("energy"), energy.to_au() * 2.0);
+        assert_eq!(
+            composition.internals.get_value("energy"),
+            energy.to_au() * 2.0
+        );
 
         composition.internals.insert_value("test value", value);
         assert_eq!(composition.internals.get_value("test value"), value);

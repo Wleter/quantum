@@ -1,6 +1,6 @@
 use super::Unit;
 
-/// Struct for representing mass unit values 
+/// Struct for representing mass unit values
 /// # Examples
 /// ```
 /// use quantum::units::{Au, mass_units::{Mass, Dalton}};
