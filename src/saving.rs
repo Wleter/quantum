@@ -3,7 +3,8 @@ use std::{fs::{create_dir_all, File}, io::Write, path::Path};
 use num::complex::Complex64;
 
 
-pub fn save_data(filename: &str, header: Vec<&str>, data: Vec<Vec<f64>>) -> Result<(), std::io::Error> {
+/// Saves data to a file in the curr_dir/data/subfolder/filename.dat
+pub fn save_data(subfolder: &str, filename: &str, header: Vec<&str>, data: Vec<Vec<f64>>) -> Result<(), std::io::Error> {
     assert!(data.len() > 0, "Data is empty");
     let n = data[0].len();
     for d in &data {
@@ -11,7 +12,7 @@ pub fn save_data(filename: &str, header: Vec<&str>, data: Vec<Vec<f64>>) -> Resu
     }
 
     let path = std::env::current_dir().unwrap();
-    let path = format!("{}/data", path.to_str().unwrap());
+    let path = format!("{}/data/{subfolder}", path.to_str().unwrap());
 
     let mut buf = header.join("\t");
 
@@ -49,7 +50,7 @@ mod tests {
         let xs = vec![1.0, 2.0, 3.0];
         let ys = vec![4.0, 5.0, 6.0];
 
-        let result = save_data(filename, header, vec![xs, ys]);
+        let result = save_data("", filename, header, vec![xs, ys]);
         assert!(result.is_ok());
     }
 }
