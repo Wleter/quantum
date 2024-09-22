@@ -94,7 +94,7 @@ macro_rules! problems_impl {
                         return;
                     }
 
-                    i = 1;
+                    i += 1;
                 )*
 
                 panic!("Not found");
