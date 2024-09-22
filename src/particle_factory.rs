@@ -3,6 +3,8 @@ use crate::{
     units::mass_units::{Dalton, Mass},
 };
 
+pub struct RotConst(pub f64);
+
 pub fn create_atom(name: &str) -> Option<Particle> {
     let mass = match name {
         "Ne" => Mass(20.1797, Dalton),
@@ -31,7 +33,7 @@ pub fn create_molecule(name: &str) -> Option<Particle> {
     };
 
     let mut particle = Particle::new(name, mass);
-    particle.internals.insert_value("rot_const", rot_const);
+    particle.params.insert(RotConst(rot_const));
 
     Some(particle)
 }

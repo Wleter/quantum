@@ -75,3 +75,49 @@ pub trait ProblemSelector {
         }
     }
 }
+
+#[macro_export]
+macro_rules! problems_impl {
+    ($selector:ty, $name:expr, $($problem_type:expr => $method:expr),*) => {
+        impl crate::problem_selector::ProblemSelector for $selector {
+            const NAME: &'static str = $name;
+
+            fn list() -> Vec<&'static str> {
+                vec![$($problem_type),*]
+            }
+
+            fn methods(number: &str, args: &mut std::collections::VecDeque<String>) {   // todo! can be done better
+                let mut i: i32 = 0;
+                $(
+                    if &i.to_string() == number {
+                        $method(&args);
+                        return;
+                    }
+
+                    i = 1;
+                )*
+
+                panic!("Not found");
+            }
+        }
+    };
+}
+
+#[cfg(test)]
+mod test {
+    use crate::problem_selector::{get_args, ProblemSelector};
+
+    struct TestProblems;
+
+    problems_impl!(TestProblems, "test", 
+        "test1" => |_| println!("test1"),
+        "test2" => |_| println!("test2"),
+        "test3" => |args| println!("{:?}", args)
+    );
+
+    #[test]
+    fn problem_selector() {
+        println!("{:?}", TestProblems::list());
+        TestProblems::methods("2", &mut get_args());
+    }
+}

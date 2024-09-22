@@ -31,7 +31,7 @@ impl<U: Unit> Distance<U> {
 
 #[derive(Copy, Clone)]
 pub struct Angstrom;
-#[allow(dead_code)]
+
 impl Unit for Angstrom {
     const TO_AU_MUL: f64 = 1.88973;
 }

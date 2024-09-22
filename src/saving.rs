@@ -2,11 +2,7 @@ use std::{fs::File, io::Write};
 
 use num::complex::Complex64;
 
-pub fn save_vec(
-    filename: &str,
-    data: Vec<Vec<f64>>,
-    header: Vec<&str>,
-) -> Result<(), std::io::Error> {
+pub fn save_vec(filename: &str, data: Vec<Vec<f64>>, header: Vec<&str>) -> Result<(), std::io::Error> {
     let path = std::env::current_dir().unwrap();
     let path = path.to_str().unwrap();
 

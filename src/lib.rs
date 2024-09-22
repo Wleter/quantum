@@ -1,4 +1,4 @@
-pub mod internals;
+pub mod params;
 pub mod particle;
 pub mod particle_factory;
 pub mod particles;
@@ -9,65 +9,28 @@ pub mod utility;
 
 #[cfg(test)]
 mod tests {
-    use crate::units::energy_units::{Energy, Kelvin};
-
+    use units::{mass_units::{Dalton, Mass}, Au};
     use super::*;
+
+    struct Parameter(u32);
+
     #[test]
-    fn particle_creation() {
+    fn particle() {
         let particle = particle_factory::create_atom("Ne");
         assert!(particle.is_some());
-
         let mut particle = particle.unwrap();
-        let value = 234111.234;
 
-        particle.internals.insert_value("test value", value);
-        assert_eq!(particle.internals.get_value("test value"), value);
-        assert_eq!(*particle.internals.get_param("test value"), (value, 1.0));
+        let mass = particle.get::<Mass<Au>>().copied();
+        assert!(mass.is_some());
+        assert_eq!(mass.unwrap().to_au(), Mass(20.1797, Dalton).to_au());
 
-        particle.internals.set_scaling("test value", 2.0);
-        assert_eq!(particle.internals.get_value("test value"), value * 2.0);
+        particle.insert(Parameter(32));
+        let parameter = particle.get::<Parameter>();
+        assert!(parameter.is_some());
+        assert_eq!(parameter.unwrap().0, 32);
+
 
         let particle = particle_factory::create_atom("Non existing atom");
         assert!(particle.is_none());
-    }
-
-    #[test]
-    fn particle_composition() {
-        let particle1 = particle_factory::create_atom("Ne").unwrap();
-        let particle2 = particle_factory::create_atom("Li6").unwrap();
-        let energy = Energy(100.0, Kelvin);
-
-        let mut composition = particles::Particles::new_pair(particle1, particle2, energy);
-        assert_eq!(composition.particle_mut("Ne").unwrap().name(), "Ne");
-
-        let value = 234111.234;
-        composition
-            .particle_mut("Ne")
-            .unwrap()
-            .internals
-            .insert_value("test value", value);
-
-        assert_eq!(
-            composition
-                .particle_mut("Ne")
-                .unwrap()
-                .internals
-                .get_value("test value"),
-            value
-        );
-
-        assert_eq!(composition.internals.get_value("energy"), energy.to_au());
-        assert_eq!(
-            *composition.internals.get_param("energy"),
-            (energy.to_au(), 1.0)
-        );
-        composition.internals.set_scaling("energy", 2.0);
-        assert_eq!(
-            composition.internals.get_value("energy"),
-            energy.to_au() * 2.0
-        );
-
-        composition.internals.insert_value("test value", value);
-        assert_eq!(composition.internals.get_value("test value"), value);
     }
 }
