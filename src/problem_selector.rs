@@ -86,6 +86,7 @@ macro_rules! problems_impl {
                 vec![$($problem_type),*]
             }
 
+            #[allow(unused_assignments)]
             fn methods(number: &str, args: &mut std::collections::VecDeque<String>) {   // todo! can be done better
                 let mut i: i32 = 0;
                 $(
