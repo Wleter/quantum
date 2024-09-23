@@ -23,4 +23,13 @@ impl Params {
             })
             .flatten()
     }
+
+    /// Returns the value of parameter of type `T` with given name if it exists.
+    pub fn get_mut<T: 'static>(&mut self) -> Option<&mut T> {
+        self.params.get_mut(&TypeId::of::<T>())
+            .map(|value| {
+                value.downcast_mut::<T>()
+            })
+            .flatten()
+    }
 }
