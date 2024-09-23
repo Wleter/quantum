@@ -15,6 +15,11 @@ impl Params {
         self
     }
 
+    /// Removes parameter of type `T`.
+    pub fn remove<T: 'static>(&mut self) {
+        self.params.remove(&TypeId::of::<T>());
+    }
+
     /// Returns the value of parameter of type `T` with given name if it exists.
     pub fn get<T: 'static>(&self) -> Option<&T> {
         self.params.get(&TypeId::of::<T>())
