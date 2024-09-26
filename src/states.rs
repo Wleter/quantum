@@ -1,77 +1,10 @@
-pub mod sum_states;
 pub mod irreducible_states;
+pub mod state_type;
+pub mod braket;
 
-use std::{iter::Peekable, slice::Iter};
+use std::ops::Deref;
 
-use irreducible_states::IrreducibleStates;
-
-#[derive(Clone, Debug)]
-pub enum StateType<T, V> {
-    Irreducible(IrreducibleStates<T, V>),
-    Sum(Vec<IrreducibleStates<T, V>>)
-}
-
-impl<T, V> StateType<T, V> {
-    pub fn size(&self) -> usize {
-        match self {
-            StateType::Irreducible(irreducible_states) => irreducible_states.size(),
-            StateType::Sum(sum_states) => sum_states.iter().fold(0, |acc, s| acc + s.size()),
-        }
-    }
-
-    pub fn iter(&self) -> StateIter<'_, T, V> {
-        match self {
-            StateType::Irreducible(s) => StateIter {
-                state_type: self,
-                sum_iter: Iter::default().peekable(),
-                irreducible_iter: s.elements.iter(),
-            },
-            StateType::Sum(vec_s) => StateIter {
-                state_type: self,
-                sum_iter: vec_s.iter().peekable(),
-                irreducible_iter: vec_s.first()
-                    .unwrap_or_else(|| panic!("no states to iter"))
-                    .elements
-                    .iter(),
-            },
-        }
-    }
-}
-
-pub struct StateIter<'a, T, V> {
-    state_type: &'a StateType<T, V>,
-    sum_iter: Peekable<Iter<'a, IrreducibleStates<T, V>>>,
-    irreducible_iter: Iter<'a, V>,
-}
-
-impl<'a, T, K> Iterator for StateIter<'a, T, K> {
-    type Item = (&'a T, &'a K);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        match self.state_type {
-            StateType::Irreducible(s) => {
-                self.irreducible_iter.next()
-                    .map(|v| (&s.state_specific, v))
-            },
-            StateType::Sum(_) => {
-                match self.irreducible_iter.next() {
-                    Some(val) => Some((&self.sum_iter.peek().unwrap().state_specific, val)),
-                    None => {
-                        self.sum_iter.next().unwrap();
-                        self.sum_iter.peek()
-                            .map(|s| {
-                                self.irreducible_iter = s.elements.iter();
-
-                                self.irreducible_iter.next()
-                                    .map(|v| (&s.state_specific, v))
-                            })
-                            .flatten()
-                    }
-                }
-            },
-        }
-    }
-}
+use state_type::{StateTypeIter, StateType};
 
 #[derive(Clone, Debug)]
 pub struct States<T, V>(Vec<StateType<T, V>>);
@@ -86,8 +19,10 @@ impl<T, V> States<T, V> {
     pub fn size(&self) -> usize {
         self.0.iter().fold(1, |acc, s| acc * s.size())
     }
-
-    pub fn iter(&self) -> StatesIter<'_, T, V> {
+}
+    
+impl<T: Copy, V: Copy> States<T, V> {
+    pub fn iter_elements(&self) -> StatesIter<'_, T, V> {
         StatesIter {
             states: &self.0,
             states_iter: self.0.iter().map(|s| s.iter()).collect(),
@@ -99,33 +34,28 @@ impl<T, V> States<T, V> {
             size: self.size(),
         }
     }
-}
 
-#[derive(Debug)]
-pub struct StatesElement<'a, T, V> {
-    pub states_specific: Vec<&'a T>,
-    pub values: Vec<&'a V>,
-}
-
-impl<'a, T, V> Clone for StatesElement<'a, T, V> {
-    fn clone(&self) -> Self {
-        Self { 
-            states_specific: self.states_specific.clone(),
-             values: self.values.clone() 
-        }
+    pub fn get_basis(&self) -> StatesBasis<T, V> {
+        self.iter_elements().collect()
     }
+}
+
+#[derive(Debug, Clone)]
+pub struct StatesElement<T, V> {
+    pub states_specific: Vec<T>,
+    pub values: Vec<V>,
 }
 
 pub struct StatesIter<'a, T, V> {
     states: &'a [StateType<T, V>],
-    states_iter: Vec<StateIter<'a, T, V>>,
-    current: StatesElement<'a, T, V>,
+    states_iter: Vec<StateTypeIter<'a, T, V>>,
+    current: StatesElement<T, V>,
     current_index: usize,
     size: usize,
 }
 
-impl<'a, T: std::fmt::Debug, V: std::fmt::Debug> Iterator for StatesIter<'a, T, V> {
-    type Item = StatesElement<'a, T, V>;
+impl<'a, T: Copy, V: Copy> Iterator for StatesIter<'a, T, V> {
+    type Item = StatesElement<T, V>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.current_index >= self.size {
@@ -135,8 +65,8 @@ impl<'a, T: std::fmt::Debug, V: std::fmt::Debug> Iterator for StatesIter<'a, T, 
             for s in self.states_iter.iter_mut() {
                 let (s_curr, v_curr) = s.next().unwrap(); // at least 1 element exists
 
-                self.current.states_specific.push(s_curr);
-                self.current.values.push(v_curr);
+                self.current.states_specific.push(*s_curr);
+                self.current.values.push(*v_curr);
             }
             self.current_index += 1;
 
@@ -150,15 +80,15 @@ impl<'a, T: std::fmt::Debug, V: std::fmt::Debug> Iterator for StatesIter<'a, T, 
         {
             match s.next() {
                 Some((s_spec_new, v_new)) => {
-                    *s_spec = s_spec_new;
-                    *v = v_new;
+                    *s_spec = *s_spec_new;
+                    *v = *v_new;
                     break
                 },
                 None => {
                     *s = s_type.iter();
-                    let (s_curr, v_curr) = s.next().unwrap(); // at least 1 element exists and asserted size
-                    *s_spec = s_curr;
-                    *v = v_curr;
+                    let (s_curr, v_curr) = s.next().unwrap(); // at least 1 element exists
+                    *s_spec = *s_curr;
+                    *v = *v_curr;
                 },
             }
         }
@@ -168,12 +98,36 @@ impl<'a, T: std::fmt::Debug, V: std::fmt::Debug> Iterator for StatesIter<'a, T, 
     }
 }
 
+pub struct StatesBasis<T, V>(Vec<StatesElement<T, V>>);
+
+impl<T, V> FromIterator<StatesElement<T, V>> for StatesBasis<T, V> {
+    fn from_iter<I: IntoIterator<Item = StatesElement<T, V>>>(iter: I) -> Self {
+        let mut elements = StatesBasis(vec![]);
+
+        for val in iter {
+            elements.0.push(val);
+        }
+
+        elements
+    }
+}
+
+impl<T, V> Deref for StatesBasis<T, V> {
+    type Target = Vec<StatesElement<T, V>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 #[cfg(test)]
 mod test {
+    use irreducible_states::IrreducibleStates;
+
     use super::*;
 
     #[allow(unused)]
-    #[derive(Clone, Debug, PartialEq)]
+    #[derive(Clone, Copy, Debug, PartialEq)]
     enum StateIds {
         ElectronSpin(u16),
         NuclearSpin(u16),
@@ -181,7 +135,7 @@ mod test {
     }
 
     #[allow(unused)]
-    #[derive(Clone, Debug, PartialEq)]
+    #[derive(Clone, Copy, Debug, PartialEq)]
     enum ElementValues {
         Spin(i16),
         Vibrational(i16)
@@ -217,10 +171,10 @@ mod test {
         let vib = StateType::Irreducible(IrreducibleStates::new(StateIds::Vibrational, vib_elements));
         states.0.push(vib);
 
-        let expected = "States([Sum([IrreducibleStates { state_specific: ElectronSpin(2), elements: [Spin(-2), Spin(0), Spin(2)] }, \
-                                    IrreducibleStates { state_specific: ElectronSpin(0), elements: [Spin(0)] }]), \
-                                Irreducible(IrreducibleStates { state_specific: NuclearSpin(1), elements: [Spin(-1), Spin(1)] }), \
-                                Irreducible(IrreducibleStates { state_specific: Vibrational, elements: [Vibrational(-1), Vibrational(-2)] })])";
+        let expected = "States([Sum([IrreducibleStates { state_specific: ElectronSpin(2), basis: [Spin(-2), Spin(0), Spin(2)] }, \
+                                    IrreducibleStates { state_specific: ElectronSpin(0), basis: [Spin(0)] }]), \
+                                Irreducible(IrreducibleStates { state_specific: NuclearSpin(1), basis: [Spin(-1), Spin(1)] }), \
+                                Irreducible(IrreducibleStates { state_specific: Vibrational, basis: [Vibrational(-1), Vibrational(-2)] })])";
 
         assert_eq!(expected, format!("{:?}", states))
     }
@@ -241,10 +195,10 @@ mod test {
         let vib = StateType::Irreducible(IrreducibleStates::new(StateIds::Vibrational, vec![-1, -2]));
         states.0.push(vib);
 
-        let expected = "States([Sum([IrreducibleStates { state_specific: ElectronSpin(2), elements: [-2, 0, 2] }, \
-                                    IrreducibleStates { state_specific: ElectronSpin(0), elements: [0] }]), \
-                                Irreducible(IrreducibleStates { state_specific: NuclearSpin(1), elements: [-1, 1] }), \
-                                Irreducible(IrreducibleStates { state_specific: Vibrational, elements: [-1, -2] })])";
+        let expected = "States([Sum([IrreducibleStates { state_specific: ElectronSpin(2), basis: [-2, 0, 2] }, \
+                                    IrreducibleStates { state_specific: ElectronSpin(0), basis: [0] }]), \
+                                Irreducible(IrreducibleStates { state_specific: NuclearSpin(1), basis: [-1, 1] }), \
+                                Irreducible(IrreducibleStates { state_specific: Vibrational, basis: [-1, -2] })])";
 
         assert_eq!(expected, format!("{:?}", states))
     }
@@ -306,7 +260,41 @@ StatesElement { states_specific: [ElectronSpin(0), NuclearSpin(1), Vibrational],
             .split("\n")
             .collect();
 
-        for (state, exp) in states.iter().zip(expected.into_iter()) {
+        for (state, exp) in states.iter_elements().zip(expected.into_iter()) {
+            assert_eq!(exp, format!("{:?}", state));
+        }
+    }
+
+    #[test]
+    fn state_filtering() {
+        let mut states = States::default();
+
+        let triplet = IrreducibleStates::new(StateIds::ElectronSpin(2), vec![-2, 0, 2]);
+        let singlet = IrreducibleStates::new(StateIds::ElectronSpin(0), vec![0]);
+
+        let e_state = StateType::Sum(vec![triplet, singlet]);
+        states.0.push(e_state);
+
+        let nuclear = StateType::Irreducible(IrreducibleStates::new(StateIds::NuclearSpin(1), vec![-1, 1]));
+        states.0.push(nuclear);
+
+        let vib = StateType::Irreducible(IrreducibleStates::new(StateIds::Vibrational, vec![-1, -2]));
+        states.0.push(vib);
+
+        let filtered: StatesBasis<StateIds, i32> = states
+            .iter_elements()
+            .filter(|s| s.states_specific[0] == StateIds::ElectronSpin(0))
+            .collect();
+
+        let expected: Vec<&str> = "\
+StatesElement { states_specific: [ElectronSpin(0), NuclearSpin(1), Vibrational], values: [0, -1, -1] }
+StatesElement { states_specific: [ElectronSpin(0), NuclearSpin(1), Vibrational], values: [0, 1, -1] }
+StatesElement { states_specific: [ElectronSpin(0), NuclearSpin(1), Vibrational], values: [0, -1, -2] }
+StatesElement { states_specific: [ElectronSpin(0), NuclearSpin(1), Vibrational], values: [0, 1, -2] }"
+            .split("\n")
+            .collect();
+
+        for (state, &exp) in filtered.iter().zip(expected.iter()) {
             assert_eq!(exp, format!("{:?}", state));
         }
     }
