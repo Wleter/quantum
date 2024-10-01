@@ -1,7 +1,6 @@
-use std::{iter::Peekable, slice::Iter};
+use std::{iter::Peekable, mem::{discriminant, Discriminant}, slice::Iter};
 
 use super::irreducible_states::IrreducibleStates;
-
 
 #[derive(Clone, Debug)]
 pub enum StateType<T, V> {
@@ -31,6 +30,23 @@ impl<T, V> StateType<T, V> {
                     .unwrap_or_else(|| panic!("no states to iter"))
                     .basis
                     .iter(),
+            },
+        }
+    }
+
+    pub fn discriminant(&self) -> Option<Discriminant<T>> {
+        match self {
+            StateType::Irreducible(irreducible_states) => Some(discriminant(&irreducible_states.state_specific)),
+            StateType::Sum(vec) => {
+                let mut iterator = vec.iter()
+                    .map(|x| discriminant(&x.state_specific));
+
+                let first = iterator.next().unwrap_or_else(|| panic!("0 sized state is not allowed"));
+                if iterator.all(|x| x == first) {
+                    Some(first)
+                } else {
+                    None
+                }
             },
         }
     }
