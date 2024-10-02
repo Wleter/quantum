@@ -5,7 +5,18 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
-faer = "0.19.4"
-nalgebra = "0.33.0"
-ndarray = "0.16.1"
+faer = { version = "0.19.4", optional=true }
+nalgebra = { version = "0.33.0", optional=true }
+ndarray = { version = "0.16.1", optional=true }
 num = "0.4.3"
+
+[features]
+default = ["units", "params", "selector", "states", "spins"]
+units = []
+params = []
+selector = []
+states = []
+spins = ["states"]
+nalgebra = ["states", "dep:nalgebra"]
+faer = ["states", "dep:faer"]
+ndarray = ["states", "dep:ndarray"]

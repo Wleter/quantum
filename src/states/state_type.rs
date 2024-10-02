@@ -73,13 +73,12 @@ impl<'a, T, K> Iterator for StateTypeIter<'a, T, K> {
                     None => {
                         self.sum_iter.next().unwrap();
                         self.sum_iter.peek()
-                            .map(|s| {
+                            .and_then(|s| {
                                 self.irreducible_iter = s.basis.iter();
 
                                 self.irreducible_iter.next()
                                     .map(|v| (&s.state_specific, v))
                             })
-                            .flatten()
                     }
                 }
             },

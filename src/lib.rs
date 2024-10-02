@@ -1,9 +1,14 @@
-pub mod params;
-pub mod particle;
-pub mod particle_factory;
-pub mod particles;
-pub mod problem_selector;
-pub mod units;
 pub mod utility;
+
+#[cfg(feature = "params")]
+pub mod params;
+
+#[cfg(feature = "selector")]
+pub mod problem_selector;
+
+#[cfg(feature = "units")]
+pub mod units;
+
+#[cfg(feature = "states")]
 pub mod states;
-pub mod operator;
+

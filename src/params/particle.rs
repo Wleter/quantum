@@ -46,7 +46,7 @@ impl DerefMut for Particle {
 
 #[cfg(test)]
 mod tests {
-    use crate::{particle_factory, units::{mass_units::{Dalton, Mass}, Au}};
+    use crate::{params::particle_factory, units::{mass_units::{Dalton, Mass}, Au}};
 
     struct Parameter(u32);
 

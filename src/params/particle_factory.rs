@@ -1,7 +1,6 @@
-use crate::{
-    particle::Particle,
-    units::mass_units::{Dalton, Mass},
-};
+use crate::units::mass_units::{Dalton, Mass};
+
+use super::particle::Particle;
 
 pub struct RotConst(pub f64);
 

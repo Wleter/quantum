@@ -2,9 +2,10 @@ use std::ops::{Deref, DerefMut};
 
 use crate::{
     params::Params,
-    particle::Particle,
     units::{energy_units::Energy, mass_units::Mass, Au, Unit},
 };
+
+use super::particle::Particle;
 
 /// Struct to hold information about a particle composition.
 pub struct Particles {

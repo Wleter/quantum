@@ -6,6 +6,12 @@ use std::ops::Deref;
 
 use state_type::{StateTypeIter, StateType};
 
+#[cfg(any(feature = "faer", feature = "nalgebra", feature = "ndarray"))]
+pub mod operator;
+
+#[cfg(feature = "spins")]
+pub mod spins;
+
 #[derive(Clone, Debug)]
 pub struct States<T, V>(Vec<StateType<T, V>>);
 
@@ -144,16 +150,16 @@ mod test {
     #[allow(unused)]
     #[derive(Clone, Copy, Debug, PartialEq)]
     enum StateIds {
-        ElectronSpin(u16),
-        NuclearSpin(u16),
+        ElectronSpin(u32),
+        NuclearSpin(u32),
         Vibrational
     }
 
     #[allow(unused)]
     #[derive(Clone, Copy, Debug, PartialEq)]
     enum ElementValues {
-        Spin(i16),
-        Vibrational(i16)
+        Spin(i32),
+        Vibrational(i32)
     }
 
     #[test]

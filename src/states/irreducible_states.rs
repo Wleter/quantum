@@ -7,7 +7,7 @@ pub struct IrreducibleStates<T, V> {
 
 impl<T: Copy, V: Copy> IrreducibleStates<T, V> {
     pub fn new(state_specific: T, basis: Vec<V>) -> Self {
-        assert!(basis.len() > 0, "0 size basis is not allowed");
+        assert!(!basis.is_empty(), "0 size basis is not allowed");
 
         Self {
             state_specific,

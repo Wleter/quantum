@@ -55,13 +55,13 @@ pub trait ProblemSelector {
                     return;
                 }
 
-                Self::methods(&input, args)
+                Self::methods(input, args)
             }
         }
 
         fn select_many(
-            list: &Vec<&'static str>,
-            methods: impl Fn(&str, &mut VecDeque<String>) -> () + std::panic::RefUnwindSafe,
+            list: &[&'static str],
+            methods: impl Fn(&str, &mut VecDeque<String>) + std::panic::RefUnwindSafe,
         ) {
             let args = VecDeque::from(vec!["-1".to_string()]);
 
@@ -79,7 +79,7 @@ pub trait ProblemSelector {
 #[macro_export]
 macro_rules! problems_impl {
     ($selector:ty, $name:expr, $($problem_type:expr => $method:expr),*) => {
-        impl crate::problem_selector::ProblemSelector for $selector {
+        impl $crate::problem_selector::ProblemSelector for $selector {
             const NAME: &'static str = $name;
 
             fn list() -> Vec<&'static str> {

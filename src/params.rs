@@ -1,3 +1,7 @@
+pub mod particle;
+pub mod particle_factory;
+pub mod particles;
+
 use std::{any::{Any, TypeId}, collections::HashMap};
 
 /// Struct to hold internal parameters.
@@ -23,18 +27,16 @@ impl Params {
     /// Returns the reference of parameter of type `T` with given name if it exists.
     pub fn get<T: 'static>(&self) -> Option<&T> {
         self.params.get(&TypeId::of::<T>())
-            .map(|value| {
+            .and_then(|value| {
                 value.downcast_ref::<T>()
             })
-            .flatten()
     }
 
     /// Returns the mutable reference of parameter of type `T` with given name if it exists.
     pub fn get_mut<T: 'static>(&mut self) -> Option<&mut T> {
         self.params.get_mut(&TypeId::of::<T>())
-            .map(|value| {
+            .and_then(|value| {
                 value.downcast_mut::<T>()
             })
-            .flatten()
     }
 }
