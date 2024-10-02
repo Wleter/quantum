@@ -15,14 +15,19 @@ pub struct Particles {
 
 impl Particles {
     /// Creates two particle composition with given collision energy inserted inside `internals` as "energy".
-    pub fn new_pair<U: Unit>(first_particle: Particle, second_particle: Particle, energy: Energy<U>) -> Self {
+    pub fn new_pair<U: Unit>(
+        first_particle: Particle,
+        second_particle: Particle,
+        energy: Energy<U>,
+    ) -> Self {
         let mass1 = first_particle.params.get::<Mass<Au>>().unwrap().value();
         let mass2 = second_particle.params.get::<Mass<Au>>().unwrap().value();
 
         let inverse_reduced_mass: f64 = 1.0 / mass1 + 1.0 / mass2;
 
         let mut params = Params::default();
-        params.insert(energy.to(Au))
+        params
+            .insert(energy.to(Au))
             .insert(Mass(1. / inverse_reduced_mass, Au));
 
         Self {
@@ -38,17 +43,14 @@ impl Particles {
 
     /// Creates a particle composition given a vector of particles.
     pub fn new_custom(particles: Vec<Particle>) -> Self {
-        let inverse_reduced_mass = particles
-            .iter()
-            .fold(0.0, |acc, particle| acc + 1.0 / particle.params.get::<Mass<Au>>().unwrap().value());
+        let inverse_reduced_mass = particles.iter().fold(0.0, |acc, particle| {
+            acc + 1.0 / particle.params.get::<Mass<Au>>().unwrap().value()
+        });
 
         let mut params = Params::default();
         params.insert(Mass(1. / inverse_reduced_mass, Au));
 
-        Self {
-            particles,
-            params,
-        }
+        Self { particles, params }
     }
 
     /// Gets the reduced mass.

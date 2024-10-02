@@ -1,10 +1,10 @@
+pub mod braket;
 pub mod irreducible_states;
 pub mod state_type;
-pub mod braket;
 
 use std::ops::Deref;
 
-use state_type::{StateTypeIter, StateType};
+use state_type::{StateType, StateTypeIter};
 
 #[cfg(any(feature = "faer", feature = "nalgebra", feature = "ndarray"))]
 pub mod operator;
@@ -41,7 +41,7 @@ impl<T, V> States<T, V> {
         self
     }
 }
-    
+
 impl<T: Copy, V: Copy> States<T, V> {
     pub fn iter_elements(&self) -> StatesIter<'_, T, V> {
         StatesIter {
@@ -94,7 +94,10 @@ impl<'a, T: Copy, V: Copy> Iterator for StatesIter<'a, T, V> {
             return Some(self.current.clone());
         }
 
-        for (((s_spec, v), s), s_type) in self.current.states_specific.iter_mut()
+        for (((s_spec, v), s), s_type) in self
+            .current
+            .states_specific
+            .iter_mut()
             .zip(self.current.values.iter_mut())
             .zip(self.states_iter.iter_mut())
             .zip(self.states.iter())
@@ -103,14 +106,14 @@ impl<'a, T: Copy, V: Copy> Iterator for StatesIter<'a, T, V> {
                 Some((s_spec_new, v_new)) => {
                     *s_spec = *s_spec_new;
                     *v = *v_new;
-                    break
-                },
+                    break;
+                }
                 None => {
                     *s = s_type.iter();
                     let (s_curr, v_curr) = s.next().unwrap(); // at least 1 element exists
                     *s_spec = *s_curr;
                     *v = *v_curr;
-                },
+                }
             }
         }
         self.current_index += 1;
@@ -152,14 +155,14 @@ mod test {
     enum StateIds {
         ElectronSpin(u32),
         NuclearSpin(u32),
-        Vibrational
+        Vibrational,
     }
 
     #[allow(unused)]
     #[derive(Clone, Copy, Debug, PartialEq)]
     enum ElementValues {
         Spin(i32),
-        Vibrational(i32)
+        Vibrational(i32),
     }
 
     #[test]
@@ -167,29 +170,30 @@ mod test {
         let mut states = States::default();
 
         let triplet_elements = vec![
-            ElementValues::Spin(-2), 
-            ElementValues::Spin(0), 
-            ElementValues::Spin(2)
+            ElementValues::Spin(-2),
+            ElementValues::Spin(0),
+            ElementValues::Spin(2),
         ];
         let triplet = IrreducibleStates::new(StateIds::ElectronSpin(2), triplet_elements);
-        let singlet = IrreducibleStates::new(StateIds::ElectronSpin(0), vec![ElementValues::Spin(0)]);
+        let singlet =
+            IrreducibleStates::new(StateIds::ElectronSpin(0), vec![ElementValues::Spin(0)]);
 
         let e_state = StateType::Sum(vec![triplet, singlet]);
         states.push_state(e_state);
 
-        let nuclear_elements = vec![
-            ElementValues::Spin(-1), 
-            ElementValues::Spin(1)
-        ];
-        let nuclear = StateType::Irreducible(IrreducibleStates::new(StateIds::NuclearSpin(1), nuclear_elements));
+        let nuclear_elements = vec![ElementValues::Spin(-1), ElementValues::Spin(1)];
+        let nuclear = StateType::Irreducible(IrreducibleStates::new(
+            StateIds::NuclearSpin(1),
+            nuclear_elements,
+        ));
         states.push_state(nuclear);
-
 
         let vib_elements = vec![
             ElementValues::Vibrational(-1),
-            ElementValues::Vibrational(-2)
+            ElementValues::Vibrational(-2),
         ];
-        let vib = StateType::Irreducible(IrreducibleStates::new(StateIds::Vibrational, vib_elements));
+        let vib =
+            StateType::Irreducible(IrreducibleStates::new(StateIds::Vibrational, vib_elements));
         states.push_state(vib);
 
         let expected = "States([Sum([IrreducibleStates { state_specific: ElectronSpin(2), basis: [Spin(-2), Spin(0), Spin(2)] }, \
@@ -210,10 +214,14 @@ mod test {
         let e_state = StateType::Sum(vec![triplet, singlet]);
         states.push_state(e_state);
 
-        let nuclear = StateType::Irreducible(IrreducibleStates::new(StateIds::NuclearSpin(1), vec![-1, 1]));
+        let nuclear = StateType::Irreducible(IrreducibleStates::new(
+            StateIds::NuclearSpin(1),
+            vec![-1, 1],
+        ));
         states.push_state(nuclear);
 
-        let vib = StateType::Irreducible(IrreducibleStates::new(StateIds::Vibrational, vec![-1, -2]));
+        let vib =
+            StateType::Irreducible(IrreducibleStates::new(StateIds::Vibrational, vec![-1, -2]));
         states.push_state(vib);
 
         let expected = "States([Sum([IrreducibleStates { state_specific: ElectronSpin(2), basis: [-2, 0, 2] }, \
@@ -238,7 +246,10 @@ mod test {
         assert_eq!(Some((&StateIds::ElectronSpin(0), &0)), e_iter.next());
         assert_eq!(None, e_iter.next());
 
-        let nuclear = StateType::Irreducible(IrreducibleStates::new(StateIds::NuclearSpin(1), vec![-1, 1]));
+        let nuclear = StateType::Irreducible(IrreducibleStates::new(
+            StateIds::NuclearSpin(1),
+            vec![-1, 1],
+        ));
         let mut n_iter = nuclear.iter();
         assert_eq!(Some((&StateIds::NuclearSpin(1), &-1)), n_iter.next());
         assert_eq!(Some((&StateIds::NuclearSpin(1), &1)), n_iter.next());
@@ -255,10 +266,14 @@ mod test {
         let e_state = StateType::Sum(vec![triplet, singlet]);
         states.push_state(e_state);
 
-        let nuclear = StateType::Irreducible(IrreducibleStates::new(StateIds::NuclearSpin(1), vec![-1, 1]));
+        let nuclear = StateType::Irreducible(IrreducibleStates::new(
+            StateIds::NuclearSpin(1),
+            vec![-1, 1],
+        ));
         states.push_state(nuclear);
 
-        let vib = StateType::Irreducible(IrreducibleStates::new(StateIds::Vibrational, vec![-1, -2]));
+        let vib =
+            StateType::Irreducible(IrreducibleStates::new(StateIds::Vibrational, vec![-1, -2]));
         states.push_state(vib);
 
         let expected: Vec<&str> = "\
@@ -296,10 +311,14 @@ StatesElement { states_specific: [ElectronSpin(0), NuclearSpin(1), Vibrational],
         let e_state = StateType::Sum(vec![triplet, singlet]);
         states.push_state(e_state);
 
-        let nuclear = StateType::Irreducible(IrreducibleStates::new(StateIds::NuclearSpin(1), vec![-1, 1]));
+        let nuclear = StateType::Irreducible(IrreducibleStates::new(
+            StateIds::NuclearSpin(1),
+            vec![-1, 1],
+        ));
         states.push_state(nuclear);
 
-        let vib = StateType::Irreducible(IrreducibleStates::new(StateIds::Vibrational, vec![-1, -2]));
+        let vib =
+            StateType::Irreducible(IrreducibleStates::new(StateIds::Vibrational, vec![-1, -2]));
         states.push_state(vib);
 
         let filtered: StatesBasis<StateIds, i32> = states
@@ -326,24 +345,28 @@ StatesElement { states_specific: [ElectronSpin(0), NuclearSpin(1), Vibrational],
         let mut states = States::default();
 
         let triplet_elements = vec![
-            ElementValues::Spin(-2), 
-            ElementValues::Spin(0), 
-            ElementValues::Spin(2)
+            ElementValues::Spin(-2),
+            ElementValues::Spin(0),
+            ElementValues::Spin(2),
         ];
         let triplet = IrreducibleStates::new(StateIds::ElectronSpin(2), triplet_elements);
-        let singlet = IrreducibleStates::new(StateIds::ElectronSpin(0), vec![ElementValues::Spin(0)]);
+        let singlet =
+            IrreducibleStates::new(StateIds::ElectronSpin(0), vec![ElementValues::Spin(0)]);
 
         let e_state = StateType::Sum(vec![triplet, singlet]);
         states.push_state(e_state);
 
-        let nuclear_elements = vec![
-            ElementValues::Spin(-1), 
-            ElementValues::Spin(1)
-        ];
-        let nuclear = StateType::Irreducible(IrreducibleStates::new(StateIds::NuclearSpin(1), nuclear_elements));
+        let nuclear_elements = vec![ElementValues::Spin(-1), ElementValues::Spin(1)];
+        let nuclear = StateType::Irreducible(IrreducibleStates::new(
+            StateIds::NuclearSpin(1),
+            nuclear_elements,
+        ));
         states.push_state(nuclear);
 
-        let second_electron_spin = IrreducibleStates::new(StateIds::ElectronSpin(1), vec![ElementValues::Spin(-1), ElementValues::Spin(1)]);
+        let second_electron_spin = IrreducibleStates::new(
+            StateIds::ElectronSpin(1),
+            vec![ElementValues::Spin(-1), ElementValues::Spin(1)],
+        );
         states.push_state(StateType::Irreducible(second_electron_spin));
     }
 }

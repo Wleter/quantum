@@ -18,7 +18,7 @@ impl Particle {
     pub fn new<U: Unit>(name: &str, mass: Mass<U>) -> Self {
         let mut params = Params::default();
         params.insert(mass.to(Au));
-        
+
         Particle {
             name: name.to_string(),
             params,
@@ -46,7 +46,13 @@ impl DerefMut for Particle {
 
 #[cfg(test)]
 mod tests {
-    use crate::{params::particle_factory, units::{mass_units::{Dalton, Mass}, Au}};
+    use crate::{
+        params::particle_factory,
+        units::{
+            mass_units::{Dalton, Mass},
+            Au,
+        },
+    };
 
     struct Parameter(u32);
 
@@ -64,7 +70,6 @@ mod tests {
         let parameter = particle.get::<Parameter>();
         assert!(parameter.is_some());
         assert_eq!(parameter.unwrap().0, 32);
-
 
         let particle = particle_factory::create_atom("Non existing atom");
         assert!(particle.is_none());

@@ -1,8 +1,7 @@
-
 #[derive(Clone, Debug)]
 pub struct IrreducibleStates<T, V> {
     pub(crate) state_specific: T,
-    pub(crate) basis: Vec<V>
+    pub(crate) basis: Vec<V>,
 }
 
 impl<T: Copy, V: Copy> IrreducibleStates<T, V> {
@@ -11,7 +10,7 @@ impl<T: Copy, V: Copy> IrreducibleStates<T, V> {
 
         Self {
             state_specific,
-            basis
+            basis,
         }
     }
 }

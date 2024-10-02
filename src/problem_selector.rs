@@ -110,7 +110,7 @@ mod test {
 
     struct TestProblems;
 
-    problems_impl!(TestProblems, "test", 
+    problems_impl!(TestProblems, "test",
         "test1" => |_| println!("test1"),
         "test2" => |_| println!("test2"),
         "test3" => |args| println!("{:?}", args)
