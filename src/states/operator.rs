@@ -1,19 +1,22 @@
 use num::traits::Zero;
 use std::{mem::discriminant, ops::Deref};
 
-use super::{braket::StateBraket, StatesBasis};
+use super::{braket::StateBraket, StatesBasis, StatesElement};
 
 pub struct Operator<M> {
     backed: M,
 }
 
-fn get_mel<'a, const N: usize, T: Copy + PartialEq, V: Copy + PartialEq, F, E: Zero>(
+fn get_mel<'a, const N: usize, T, V, F, E>(
     elements: &'a StatesBasis<T, V>,
     action_states: &[T; N],
     mat_element: F,
 ) -> impl Fn(usize, usize) -> E + 'a
 where
     F: Fn([StateBraket<T, V>; N]) -> E + 'a,
+    T: Copy + PartialEq,
+    V: Copy + PartialEq,
+    E: Zero,
 {
     let first = elements
         .first()
@@ -67,6 +70,29 @@ where
     }
 }
 
+fn get_transformation<'a, T1, V1, T2, V2, F, E>(
+    elements: &'a StatesBasis<T1, V1>,
+    elements_transformed: &'a StatesBasis<T2, V2>,
+    mat_element: F,
+) -> impl Fn(usize, usize) -> E + 'a
+where
+    F: Fn(&StatesElement<T1, V1>, &StatesElement<T2, V2>) -> E + 'a,
+    T1: Copy + PartialEq,
+    V1: Copy + PartialEq,
+    T2: Copy + PartialEq,
+    V2: Copy + PartialEq,
+    E: Zero,
+{
+    move |i, j| {
+        unsafe {
+            let elements_i = elements.get_unchecked(i);
+            let elements_j = elements_transformed.get_unchecked(j);
+
+            mat_element(elements_i, elements_j) // introduce caching
+        }
+    }
+}
+
 #[cfg(feature = "faer")]
 use faer::{Entity, Mat};
 
@@ -82,6 +108,24 @@ impl<E: Entity + Zero> Operator<Mat<E>> {
     {
         let mel = get_mel(elements, &action_states, mat_element);
         let mat = Mat::from_fn(elements.len(), elements.len(), mel);
+
+        Self { backed: mat }
+    }
+
+    pub fn get_transformation<'a, T1, V1, T2, V2, F>(
+        elements: &'a StatesBasis<T1, V1>,
+        elements_transformed: &'a StatesBasis<T2, V2>,
+        mat_element: F,
+    ) -> Self
+    where
+        F: Fn(&StatesElement<T1, V1>, &StatesElement<T2, V2>) -> E + 'a,
+        T1: Copy + PartialEq,
+        V1: Copy + PartialEq,
+        T2: Copy + PartialEq,
+        V2: Copy + PartialEq,
+    {
+        let mel = get_transformation(elements, elements_transformed, mat_element);
+        let mat = Mat::from_fn(elements.len(), elements_transformed.len(), mel);
 
         Self { backed: mat }
     }
@@ -111,6 +155,24 @@ impl<E: nalgebra::Scalar + Zero> Operator<DMatrix<E>> {
     {
         let mel = get_mel(elements, &action_states, mat_element);
         let mat = DMatrix::from_fn(elements.len(), elements.len(), mel);
+
+        Self { backed: mat }
+    }
+
+    pub fn get_transformation<'a, T1, V1, T2, V2, F>(
+        elements: &'a StatesBasis<T1, V1>,
+        elements_transformed: &'a StatesBasis<T2, V2>,
+        mat_element: F,
+    ) -> Self
+    where
+        F: Fn(&StatesElement<T1, V1>, &StatesElement<T2, V2>) -> E + 'a,
+        T1: Copy + PartialEq,
+        V1: Copy + PartialEq,
+        T2: Copy + PartialEq,
+        V2: Copy + PartialEq,
+    {
+        let mel = get_transformation(elements, elements_transformed, mat_element);
+        let mat = DMatrix::from_fn(elements.len(), elements_transformed.len(), mel);
 
         Self { backed: mat }
     }
@@ -175,6 +237,26 @@ impl<E: Zero> Operator<Array2<E>> {
     {
         let mel = get_mel(elements, &action_states, mat_element);
         let mat = Array2::from_shape_fn((elements.len(), elements.len()), |(i, j)| mel(i, j));
+
+        Self { backed: mat }
+    }
+
+    pub fn get_transformation<'a, T1, V1, T2, V2, F>(
+        elements: &'a StatesBasis<T1, V1>,
+        elements_transformed: &'a StatesBasis<T2, V2>,
+        mat_element: F,
+    ) -> Self
+    where
+        F: Fn(&StatesElement<T1, V1>, &StatesElement<T2, V2>) -> E + 'a,
+        T1: Copy + PartialEq,
+        V1: Copy + PartialEq,
+        T2: Copy + PartialEq,
+        V2: Copy + PartialEq,
+    {
+        let mel = get_transformation(elements, elements_transformed, mat_element);
+        let mat = Array2::from_shape_fn((elements.len(), elements_transformed.len()), |(i, j)| {
+            mel(i, j)
+        });
 
         Self { backed: mat }
     }
@@ -292,10 +374,18 @@ mod test {
             [StateIds::ElectronSpin(0), StateIds::Vibrational],
             |[el_state, vib]| {
                 if vib.ket != vib.bra {
-                    let StateIds::ElectronSpin(ket_spin) = el_state.ket.0 else { unreachable!() };
-                    let StateIds::ElectronSpin(bra_spin) = el_state.bra.0 else { unreachable!() };
-                    let ElementValues::Spin(ket_spin_z) = el_state.ket.1 else { panic!("wrong state variant") };
-                    let ElementValues::Spin(bra_spin_z) = el_state.bra.1 else { panic!("wrong state variant") };
+                    let StateIds::ElectronSpin(ket_spin) = el_state.ket.0 else {
+                        unreachable!()
+                    };
+                    let StateIds::ElectronSpin(bra_spin) = el_state.bra.0 else {
+                        unreachable!()
+                    };
+                    let ElementValues::Spin(ket_spin_z) = el_state.ket.1 else {
+                        panic!("wrong state variant")
+                    };
+                    let ElementValues::Spin(bra_spin_z) = el_state.bra.1 else {
+                        panic!("wrong state variant")
+                    };
 
                     ((ket_spin * 1000 + bra_spin * 100) as i32 + ket_spin_z * 10 + bra_spin_z)
                         as f64
@@ -322,7 +412,7 @@ mod test {
 
     #[test]
     #[cfg(all(feature = "faer", feature = "nalgebra", feature = "ndarray"))]
-    fn test_operators_different_backed() {
+    fn test_operators() {
         use faer::Mat;
         use nalgebra::{DMatrix, SMatrix};
         use ndarray::Array2;
@@ -331,10 +421,18 @@ mod test {
 
         let matrix_elements = |[el_state, vib]: [StateBraket<StateIds, ElementValues>; 2]| {
             if vib.ket != vib.bra {
-                let StateIds::ElectronSpin(ket_spin) = el_state.ket.0 else { unreachable!() };
-                let StateIds::ElectronSpin(bra_spin) = el_state.bra.0 else { unreachable!() };
-                let ElementValues::Spin(ket_spin_z) = el_state.ket.1 else { panic!("wrong variant for this state") };
-                let ElementValues::Spin(bra_spin_z) = el_state.bra.1 else { panic!("wrong variant for this state") };
+                let StateIds::ElectronSpin(ket_spin) = el_state.ket.0 else {
+                    unreachable!()
+                };
+                let StateIds::ElectronSpin(bra_spin) = el_state.bra.0 else {
+                    unreachable!()
+                };
+                let ElementValues::Spin(ket_spin_z) = el_state.ket.1 else {
+                    panic!("wrong variant for this state")
+                };
+                let ElementValues::Spin(bra_spin_z) = el_state.bra.1 else {
+                    panic!("wrong variant for this state")
+                };
 
                 ((ket_spin * 1000 + bra_spin * 100) as i32 + ket_spin_z * 10 + bra_spin_z) as f64
             } else {
@@ -378,5 +476,75 @@ mod test {
             operator_d_matrix.backed.transpose().as_slice(),
             operator_ndarray.backed.as_slice().unwrap()
         ); // transpose since the memory layout is different for ndarray
+    }
+
+    #[test]
+    #[cfg(feature = "faer")]
+    fn test_transformations() {
+        use faer::{assert_matrix_eq, mat, Mat};
+
+        use crate::states::StatesElement;
+
+        #[derive(Debug, Clone, Copy, PartialEq)]
+        enum Combined {
+            Spin(u32)
+        }
+
+        #[derive(Debug, Clone, Copy, PartialEq)]
+        enum Separated {
+            Spin1(u32),
+            Spin2(u32)
+        }
+
+        let mut states_combined = States::default();
+        let singlet = IrreducibleStates::new(Combined::Spin(0), vec![0]);
+        let triplet = IrreducibleStates::new(Combined::Spin(2), vec![-2, 0, 2]);
+        states_combined.push_state(StateType::Sum(vec![singlet, triplet]));
+
+        let elements_combined = states_combined.iter_elements()
+            .filter(|x| x.states_specific[0] == Combined::Spin(2))
+            .collect();
+
+        let mut states_sep = States::default();
+        let s1 = IrreducibleStates::new(Separated::Spin1(1), vec![-1, 1]);
+        let s2 = IrreducibleStates::new(Separated::Spin2(1), vec![-1, 1]);
+
+        states_sep.push_state(StateType::Irreducible(s1))
+            .push_state(StateType::Irreducible(s2));
+        let elements_sep = states_sep.get_basis();
+
+        let transformation = |sep: &StatesElement<Separated, i32>, combined: &StatesElement<Combined, i32>| {
+            let m1 = sep.values[0];
+            let m2 = sep.values[1];
+
+            let Combined::Spin(s_comb) = combined.states_specific[0];
+            let m_comb = combined.values[0];
+
+            if m_comb == m1 + m2 {
+                if m_comb == 0 {
+                    let sign = if s_comb == 0 && m1 == -1 && m2 == 1 {
+                        -1.
+                    } else {
+                        1.
+                    };
+                    sign * 0.5f64.sqrt()
+                } else {
+                    1.
+                }
+            } else {
+                0.0  
+            }
+        };
+
+        let transformation_faer = Operator::<Mat<f64>>::get_transformation(&elements_sep, &elements_combined, transformation);
+
+        let expected = mat![
+            [1.000, 0.000, 0.000],
+            [0.000, 0.707, 0.000],
+            [0.000, 0.707, 0.000],
+            [0.000, 0.000, 1.000],
+        ];
+
+        assert_matrix_eq!(expected, transformation_faer.backed, comp = abs, tol = 1e-3);
     }
 }
