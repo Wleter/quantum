@@ -91,7 +91,7 @@ macro_rules! problems_impl {
                 let mut i: i32 = 0;
                 $(
                     if &i.to_string() == number {
-                        $method(&args);
+                        $method(args);
                         return;
                     }
 
