@@ -41,16 +41,15 @@ where
 
     let indices = action_states.map(|s| {
         first
-            .states_specific
+            .variants
             .iter()
             .enumerate()
             .find(|(_, &x)| discriminant(&x) == discriminant(&s)) // variants are distinct by creation in States
             .map_or_else(|| panic!("action state not found in elements"), |x| x.0)
     });
 
-    let diagonal_indices: Vec<usize> = (0..first.states_specific.len())
-        .into_iter()
-        .filter(|x| !indices.contains(&x))
+    let diagonal_indices: Vec<usize> = (0..first.variants.len())
+        .filter(|x| !indices.contains(x))
         .collect();
 
     move |i, j| {
@@ -59,8 +58,8 @@ where
             let elements_j = elements.get_unchecked(j);
 
             for &index in &diagonal_indices {
-                if elements_i.states_specific.get_unchecked(index)
-                    != elements_j.states_specific.get_unchecked(index)
+                if elements_i.variants.get_unchecked(index)
+                    != elements_j.variants.get_unchecked(index)
                     || elements_i.values.get_unchecked(index)
                         != elements_j.values.get_unchecked(index)
                 {
@@ -70,12 +69,12 @@ where
 
             let brakets = indices.map(|index| {
                 let bra = (
-                    *elements_i.states_specific.get_unchecked(index),
+                    *elements_i.variants.get_unchecked(index),
                     *elements_i.values.get_unchecked(index),
                 );
 
                 let ket = (
-                    *elements_j.states_specific.get_unchecked(index),
+                    *elements_j.variants.get_unchecked(index),
                     *elements_j.values.get_unchecked(index),
                 );
 
@@ -291,9 +290,7 @@ impl<E> Deref for Operator<Array2<E>> {
 #[cfg(test)]
 mod test {
     use super::Operator;
-    use crate::states::{
-        braket::StateBraket, irreducible_states::State, state_type::StateType, States,
-    };
+    use crate::states::{braket::StateBraket, state::State, state_type::StateType, States};
 
     #[derive(Clone, Copy, Debug, PartialEq)]
     enum StateIds {
@@ -501,7 +498,7 @@ mod test {
 
         let elements_combined = states_combined
             .iter_elements()
-            .filter(|x| x.states_specific[0] == Combined::Spin(2))
+            .filter(|x| x.variants[0] == Combined::Spin(2))
             .collect();
 
         let mut states_sep = States::default();
@@ -518,7 +515,7 @@ mod test {
                 let m1 = sep.values[0];
                 let m2 = sep.values[1];
 
-                let Combined::Spin(s_comb) = combined.states_specific[0];
+                let Combined::Spin(s_comb) = combined.variants[0];
                 let m_comb = combined.values[0];
 
                 if m_comb == m1 + m2 {

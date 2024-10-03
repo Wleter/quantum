@@ -59,7 +59,7 @@ mod test {
 
     use crate::{
         cast_variant,
-        states::{irreducible_states::State, operator::Operator, state_type::StateType, States},
+        states::{operator::Operator, state::State, state_type::StateType, States},
     };
 
     use super::{DoubleSpin, SpinOperators};
@@ -120,13 +120,13 @@ mod test {
         let basis_comb = combined.get_basis();
 
         let op = Operator::<Mat<f64>>::get_transformation(&basis, &basis_comb, |sep, comb| {
-            let s1 = cast_variant!(sep.states_specific[0], StateSep::Spin1);
+            let s1 = cast_variant!(sep.variants[0], StateSep::Spin1);
             let s1 = DoubleSpin(s1, sep.values[0]);
 
-            let s2 = cast_variant!(sep.states_specific[1], StateSep::Spin2);
+            let s2 = cast_variant!(sep.variants[1], StateSep::Spin2);
             let s2 = DoubleSpin(s2, sep.values[1]);
 
-            let s = DoubleSpin(comb.states_specific[0], comb.values[0]);
+            let s = DoubleSpin(comb.variants[0], comb.values[0]);
 
             SpinOperators::clebsch_gordan(s1, s2, s)
         });

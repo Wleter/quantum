@@ -4,7 +4,7 @@ use std::{
     slice::Iter,
 };
 
-use super::irreducible_states::State;
+use super::state::State;
 
 #[derive(Clone, Debug)]
 pub enum StateType<T, V> {

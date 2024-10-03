@@ -1,5 +1,5 @@
 pub mod braket;
-pub mod irreducible_states;
+pub mod state;
 pub mod state_type;
 
 use std::ops::Deref;
@@ -49,7 +49,7 @@ impl<T: Copy, V: Copy> States<T, V> {
             states: &self.0,
             states_iter: self.0.iter().map(|s| s.iter()).collect(),
             current: StatesElement {
-                states_specific: Vec::with_capacity(self.0.len()),
+                variants: Vec::with_capacity(self.0.len()),
                 values: Vec::with_capacity(self.0.len()),
             },
             current_index: 0,
@@ -64,8 +64,15 @@ impl<T: Copy, V: Copy> States<T, V> {
 
 #[derive(Debug, Clone)]
 pub struct StatesElement<T, V> {
-    pub states_specific: Vec<T>,
+    pub variants: Vec<T>,
     pub values: Vec<V>,
+}
+
+impl<T, V> StatesElement<T, V> {
+    pub fn pairwise_iter(&self) -> impl Iterator<Item = (&T, &V)> {
+        self.variants.iter()
+            .zip(self.values.iter())
+    }
 }
 
 pub struct StatesIter<'a, T, V> {
@@ -87,7 +94,7 @@ impl<'a, T: Copy, V: Copy> Iterator for StatesIter<'a, T, V> {
             for s in self.states_iter.iter_mut() {
                 let (s_curr, v_curr) = s.next().unwrap(); // at least 1 element exists
 
-                self.current.states_specific.push(*s_curr);
+                self.current.variants.push(*s_curr);
                 self.current.values.push(*v_curr);
             }
             self.current_index += 1;
@@ -97,7 +104,7 @@ impl<'a, T: Copy, V: Copy> Iterator for StatesIter<'a, T, V> {
 
         for (((s_spec, v), s), s_type) in self
             .current
-            .states_specific
+            .variants
             .iter_mut()
             .zip(self.current.values.iter_mut())
             .zip(self.states_iter.iter_mut())
@@ -147,7 +154,7 @@ impl<T, V> Deref for StatesBasis<T, V> {
 
 #[cfg(test)]
 mod test {
-    use irreducible_states::State;
+    use state::State;
 
     use super::*;
 
@@ -263,22 +270,22 @@ mod test {
         states.push_state(vib);
 
         let expected: Vec<&str> = "\
-StatesElement { states_specific: [ElectronSpin(2), NuclearSpin(1), Vibrational], values: [-2, -1, -1] }
-StatesElement { states_specific: [ElectronSpin(2), NuclearSpin(1), Vibrational], values: [0, -1, -1] }
-StatesElement { states_specific: [ElectronSpin(2), NuclearSpin(1), Vibrational], values: [2, -1, -1] }
-StatesElement { states_specific: [ElectronSpin(0), NuclearSpin(1), Vibrational], values: [0, -1, -1] }
-StatesElement { states_specific: [ElectronSpin(2), NuclearSpin(1), Vibrational], values: [-2, 1, -1] }
-StatesElement { states_specific: [ElectronSpin(2), NuclearSpin(1), Vibrational], values: [0, 1, -1] }
-StatesElement { states_specific: [ElectronSpin(2), NuclearSpin(1), Vibrational], values: [2, 1, -1] }
-StatesElement { states_specific: [ElectronSpin(0), NuclearSpin(1), Vibrational], values: [0, 1, -1] }
-StatesElement { states_specific: [ElectronSpin(2), NuclearSpin(1), Vibrational], values: [-2, -1, -2] }
-StatesElement { states_specific: [ElectronSpin(2), NuclearSpin(1), Vibrational], values: [0, -1, -2] }
-StatesElement { states_specific: [ElectronSpin(2), NuclearSpin(1), Vibrational], values: [2, -1, -2] }
-StatesElement { states_specific: [ElectronSpin(0), NuclearSpin(1), Vibrational], values: [0, -1, -2] }
-StatesElement { states_specific: [ElectronSpin(2), NuclearSpin(1), Vibrational], values: [-2, 1, -2] }
-StatesElement { states_specific: [ElectronSpin(2), NuclearSpin(1), Vibrational], values: [0, 1, -2] }
-StatesElement { states_specific: [ElectronSpin(2), NuclearSpin(1), Vibrational], values: [2, 1, -2] }
-StatesElement { states_specific: [ElectronSpin(0), NuclearSpin(1), Vibrational], values: [0, 1, -2] }"
+StatesElement { variants: [ElectronSpin(2), NuclearSpin(1), Vibrational], values: [-2, -1, -1] }
+StatesElement { variants: [ElectronSpin(2), NuclearSpin(1), Vibrational], values: [0, -1, -1] }
+StatesElement { variants: [ElectronSpin(2), NuclearSpin(1), Vibrational], values: [2, -1, -1] }
+StatesElement { variants: [ElectronSpin(0), NuclearSpin(1), Vibrational], values: [0, -1, -1] }
+StatesElement { variants: [ElectronSpin(2), NuclearSpin(1), Vibrational], values: [-2, 1, -1] }
+StatesElement { variants: [ElectronSpin(2), NuclearSpin(1), Vibrational], values: [0, 1, -1] }
+StatesElement { variants: [ElectronSpin(2), NuclearSpin(1), Vibrational], values: [2, 1, -1] }
+StatesElement { variants: [ElectronSpin(0), NuclearSpin(1), Vibrational], values: [0, 1, -1] }
+StatesElement { variants: [ElectronSpin(2), NuclearSpin(1), Vibrational], values: [-2, -1, -2] }
+StatesElement { variants: [ElectronSpin(2), NuclearSpin(1), Vibrational], values: [0, -1, -2] }
+StatesElement { variants: [ElectronSpin(2), NuclearSpin(1), Vibrational], values: [2, -1, -2] }
+StatesElement { variants: [ElectronSpin(0), NuclearSpin(1), Vibrational], values: [0, -1, -2] }
+StatesElement { variants: [ElectronSpin(2), NuclearSpin(1), Vibrational], values: [-2, 1, -2] }
+StatesElement { variants: [ElectronSpin(2), NuclearSpin(1), Vibrational], values: [0, 1, -2] }
+StatesElement { variants: [ElectronSpin(2), NuclearSpin(1), Vibrational], values: [2, 1, -2] }
+StatesElement { variants: [ElectronSpin(0), NuclearSpin(1), Vibrational], values: [0, 1, -2] }"
             .split("\n")
             .collect();
 
@@ -305,14 +312,14 @@ StatesElement { states_specific: [ElectronSpin(0), NuclearSpin(1), Vibrational],
 
         let filtered: StatesBasis<StateIds, i32> = states
             .iter_elements()
-            .filter(|s| s.states_specific[0] == StateIds::ElectronSpin(0))
+            .filter(|s| s.variants[0] == StateIds::ElectronSpin(0))
             .collect();
 
         let expected: Vec<&str> = "\
-StatesElement { states_specific: [ElectronSpin(0), NuclearSpin(1), Vibrational], values: [0, -1, -1] }
-StatesElement { states_specific: [ElectronSpin(0), NuclearSpin(1), Vibrational], values: [0, 1, -1] }
-StatesElement { states_specific: [ElectronSpin(0), NuclearSpin(1), Vibrational], values: [0, -1, -2] }
-StatesElement { states_specific: [ElectronSpin(0), NuclearSpin(1), Vibrational], values: [0, 1, -2] }"
+StatesElement { variants: [ElectronSpin(0), NuclearSpin(1), Vibrational], values: [0, -1, -1] }
+StatesElement { variants: [ElectronSpin(0), NuclearSpin(1), Vibrational], values: [0, 1, -1] }
+StatesElement { variants: [ElectronSpin(0), NuclearSpin(1), Vibrational], values: [0, -1, -2] }
+StatesElement { variants: [ElectronSpin(0), NuclearSpin(1), Vibrational], values: [0, 1, -2] }"
             .split("\n")
             .collect();
 
