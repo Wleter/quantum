@@ -13,7 +13,7 @@ num = "0.4.3"
 
 
 [features]
-default = ["units", "params", "selector", "states", "spins"]
+default = ["units", "params", "selector"]
 units = []
 params = []
 selector = []
