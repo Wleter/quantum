@@ -3,8 +3,25 @@ use std::{mem::discriminant, ops::Deref};
 
 use super::{braket::StateBraket, StatesBasis, StatesElement};
 
+#[derive(Debug, Clone)]
 pub struct Operator<M> {
     backed: M,
+}
+
+/// Cast the expression `value` to the variant `pat` or panic if it is mismatched.
+#[macro_export]
+macro_rules! cast_variant {
+    ($value:expr, $pat:path) => {{
+        if let $pat(a) = $value {
+            a
+        } else {
+            panic!(
+                "mismatch variant when casting to {} for value {}",
+                stringify!($pat),
+                stringify!($val)
+            )
+        }
+    }};
 }
 
 fn get_mel<'a, const N: usize, T, V, F, E>(
@@ -52,12 +69,12 @@ where
             }
 
             let brakets = indices.map(|index| {
-                let ket = (
+                let bra = (
                     *elements_i.states_specific.get_unchecked(index),
                     *elements_i.values.get_unchecked(index),
                 );
 
-                let bra = (
+                let ket = (
                     *elements_j.states_specific.get_unchecked(index),
                     *elements_j.values.get_unchecked(index),
                 );
@@ -85,10 +102,10 @@ where
 {
     move |i, j| {
         unsafe {
-            let elements_i = elements.get_unchecked(i);
-            let elements_j = elements_transformed.get_unchecked(j);
+            let elements_i = elements_transformed.get_unchecked(i);
+            let elements_j = elements.get_unchecked(j);
 
-            mat_element(elements_i, elements_j) // introduce caching
+            mat_element(elements_j, elements_i) // introduce caching
         }
     }
 }
@@ -125,7 +142,7 @@ impl<E: Entity + Zero> Operator<Mat<E>> {
         V2: Copy + PartialEq,
     {
         let mel = get_transformation(elements, elements_transformed, mat_element);
-        let mat = Mat::from_fn(elements.len(), elements_transformed.len(), mel);
+        let mat = Mat::from_fn(elements_transformed.len(), elements.len(), mel);
 
         Self { backed: mat }
     }
@@ -172,7 +189,7 @@ impl<E: nalgebra::Scalar + Zero> Operator<DMatrix<E>> {
         V2: Copy + PartialEq,
     {
         let mel = get_transformation(elements, elements_transformed, mat_element);
-        let mat = DMatrix::from_fn(elements.len(), elements_transformed.len(), mel);
+        let mat = DMatrix::from_fn(elements_transformed.len(), elements.len(), mel);
 
         Self { backed: mat }
     }
@@ -254,7 +271,7 @@ impl<E: Zero> Operator<Array2<E>> {
         V2: Copy + PartialEq,
     {
         let mel = get_transformation(elements, elements_transformed, mat_element);
-        let mat = Array2::from_shape_fn((elements.len(), elements_transformed.len()), |(i, j)| {
+        let mat = Array2::from_shape_fn((elements_transformed.len(), elements.len()), |(i, j)| {
             mel(i, j)
         });
 
@@ -334,16 +351,15 @@ mod test {
             });
 
         let expected = mat![
-            [-2.0, -2.0, -2.0, -2.0, 0.0, 0.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-            [2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0, 0.0, -2.0, -2.0, -2.0, -2.0],
-            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0],
-            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [-2.0, 0.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [-2.0, 0.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [-2.0, 0.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [-2.0, 0.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, -2.0, 0.0, 2.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, -2.0, 0.0, 2.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, -2.0, 0.0, 2.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, -2.0, 0.0, 2.0, 0.0],
         ];
-
         assert_eq!(expected, operator.backed);
 
         let operator =
@@ -357,16 +373,15 @@ mod test {
             });
 
         let expected = mat![
-            [-2.0, 0.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-            [-2.0, 0.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-            [-2.0, 0.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-            [-2.0, 0.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0, 0.0, -2.0, 0.0, 2.0, 0.0],
-            [0.0, 0.0, 0.0, 0.0, -2.0, 0.0, 2.0, 0.0],
-            [0.0, 0.0, 0.0, 0.0, -2.0, 0.0, 2.0, 0.0],
-            [0.0, 0.0, 0.0, 0.0, -2.0, 0.0, 2.0, 0.0],
+            [-2.0, -2.0, -2.0, -2.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, -2.0, -2.0, -2.0, -2.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         ];
-
         assert_eq!(expected, operator.backed);
 
         let operator = Operator::<Mat<f64>>::from_mel(
@@ -374,18 +389,11 @@ mod test {
             [StateIds::ElectronSpin(0), StateIds::Vibrational],
             |[el_state, vib]| {
                 if vib.ket != vib.bra {
-                    let StateIds::ElectronSpin(ket_spin) = el_state.ket.0 else {
-                        unreachable!()
-                    };
-                    let StateIds::ElectronSpin(bra_spin) = el_state.bra.0 else {
-                        unreachable!()
-                    };
-                    let ElementValues::Spin(ket_spin_z) = el_state.ket.1 else {
-                        panic!("wrong state variant")
-                    };
-                    let ElementValues::Spin(bra_spin_z) = el_state.bra.1 else {
-                        panic!("wrong state variant")
-                    };
+                    let ket_spin = cast_variant!(el_state.ket.0, StateIds::ElectronSpin);
+                    let bra_spin = cast_variant!(el_state.bra.0, StateIds::ElectronSpin);
+
+                    let ket_spin_z = cast_variant!(el_state.ket.1, ElementValues::Spin);
+                    let bra_spin_z = cast_variant!(el_state.bra.1, ElementValues::Spin);
 
                     ((ket_spin * 1000 + bra_spin * 100) as i32 + ket_spin_z * 10 + bra_spin_z)
                         as f64
@@ -396,17 +404,16 @@ mod test {
         );
 
         let expected = mat![
-            [0.0, 0.0, 0.0, 0.0, 2178.0, 2180.0, 2182.0, 1980.0],
-            [0.0, 0.0, 0.0, 0.0, 2198.0, 2200.0, 2202.0, 2000.0],
-            [0.0, 0.0, 0.0, 0.0, 2218.0, 2220.0, 2222.0, 2020.0],
-            [0.0, 0.0, 0.0, 0.0, 198.0, 200.0, 202.0, 0.0],
-            [2178.0, 2180.0, 2182.0, 1980.0, 0.0, 0.0, 0.0, 0.0],
-            [2198.0, 2200.0, 2202.0, 2000.0, 0.0, 0.0, 0.0, 0.0],
-            [2218.0, 2220.0, 2222.0, 2020.0, 0.0, 0.0, 0.0, 0.0],
-            [198.0, 200.0, 202.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 2178.0, 2198.0, 2218.0, 198.0],
+            [0.0, 0.0, 0.0, 0.0, 2180.0, 2200.0, 2220.0, 200.0],
+            [0.0, 0.0, 0.0, 0.0, 2182.0, 2202.0, 2222.0, 202.0],
+            [0.0, 0.0, 0.0, 0.0, 1980.0, 2000.0, 2020.0, 0.0],
+            [2178.0, 2198.0, 2218.0, 198.0, 0.0, 0.0, 0.0, 0.0],
+            [2180.0, 2200.0, 2220.0, 200.0, 0.0, 0.0, 0.0, 0.0],
+            [2182.0, 2202.0, 2222.0, 202.0, 0.0, 0.0, 0.0, 0.0],
+            [1980.0, 2000.0, 2020.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         ];
 
-        println!("{:?}", operator.backed);
         assert_eq!(expected, operator.backed);
     }
 
@@ -421,18 +428,11 @@ mod test {
 
         let matrix_elements = |[el_state, vib]: [StateBraket<StateIds, ElementValues>; 2]| {
             if vib.ket != vib.bra {
-                let StateIds::ElectronSpin(ket_spin) = el_state.ket.0 else {
-                    unreachable!()
-                };
-                let StateIds::ElectronSpin(bra_spin) = el_state.bra.0 else {
-                    unreachable!()
-                };
-                let ElementValues::Spin(ket_spin_z) = el_state.ket.1 else {
-                    panic!("wrong variant for this state")
-                };
-                let ElementValues::Spin(bra_spin_z) = el_state.bra.1 else {
-                    panic!("wrong variant for this state")
-                };
+                let ket_spin = cast_variant!(el_state.ket.0, StateIds::ElectronSpin);
+                let bra_spin = cast_variant!(el_state.bra.0, StateIds::ElectronSpin);
+
+                let ket_spin_z = cast_variant!(el_state.ket.1, ElementValues::Spin);
+                let bra_spin_z = cast_variant!(el_state.bra.1, ElementValues::Spin);
 
                 ((ket_spin * 1000 + bra_spin * 100) as i32 + ket_spin_z * 10 + bra_spin_z) as f64
             } else {
@@ -443,22 +443,22 @@ mod test {
         let operator_faer = Operator::<Mat<f64>>::from_mel(
             &elements,
             [StateIds::ElectronSpin(0), StateIds::Vibrational],
-            matrix_elements.clone(),
+            matrix_elements,
         );
         let operator_d_matrix = Operator::<DMatrix<f64>>::from_mel(
             &elements,
             [StateIds::ElectronSpin(0), StateIds::Vibrational],
-            matrix_elements.clone(),
+            matrix_elements,
         );
         let operator_s_matrix = Operator::<SMatrix<f64, 8, 8>>::from_mel(
             &elements,
             [StateIds::ElectronSpin(0), StateIds::Vibrational],
-            matrix_elements.clone(),
+            matrix_elements,
         );
         let operator_ndarray = Operator::<Array2<f64>>::from_mel(
             &elements,
             [StateIds::ElectronSpin(0), StateIds::Vibrational],
-            matrix_elements.clone(),
+            matrix_elements,
         );
 
         let faer_slice: Vec<f64> = operator_faer
@@ -487,13 +487,13 @@ mod test {
 
         #[derive(Debug, Clone, Copy, PartialEq)]
         enum Combined {
-            Spin(u32)
+            Spin(u32),
         }
 
         #[derive(Debug, Clone, Copy, PartialEq)]
         enum Separated {
             Spin1(u32),
-            Spin2(u32)
+            Spin2(u32),
         }
 
         let mut states_combined = States::default();
@@ -501,7 +501,8 @@ mod test {
         let triplet = IrreducibleStates::new(Combined::Spin(2), vec![-2, 0, 2]);
         states_combined.push_state(StateType::Sum(vec![singlet, triplet]));
 
-        let elements_combined = states_combined.iter_elements()
+        let elements_combined = states_combined
+            .iter_elements()
             .filter(|x| x.states_specific[0] == Combined::Spin(2))
             .collect();
 
@@ -509,40 +510,45 @@ mod test {
         let s1 = IrreducibleStates::new(Separated::Spin1(1), vec![-1, 1]);
         let s2 = IrreducibleStates::new(Separated::Spin2(1), vec![-1, 1]);
 
-        states_sep.push_state(StateType::Irreducible(s1))
+        states_sep
+            .push_state(StateType::Irreducible(s1))
             .push_state(StateType::Irreducible(s2));
         let elements_sep = states_sep.get_basis();
 
-        let transformation = |sep: &StatesElement<Separated, i32>, combined: &StatesElement<Combined, i32>| {
-            let m1 = sep.values[0];
-            let m2 = sep.values[1];
+        let transformation =
+            |sep: &StatesElement<Separated, i32>, combined: &StatesElement<Combined, i32>| {
+                let m1 = sep.values[0];
+                let m2 = sep.values[1];
 
-            let Combined::Spin(s_comb) = combined.states_specific[0];
-            let m_comb = combined.values[0];
+                let Combined::Spin(s_comb) = combined.states_specific[0];
+                let m_comb = combined.values[0];
 
-            if m_comb == m1 + m2 {
-                if m_comb == 0 {
-                    let sign = if s_comb == 0 && m1 == -1 && m2 == 1 {
-                        -1.
+                if m_comb == m1 + m2 {
+                    if m_comb == 0 {
+                        let sign = if s_comb == 0 && m1 == -1 && m2 == 1 {
+                            -1.
+                        } else {
+                            1.
+                        };
+                        sign * 0.5f64.sqrt()
                     } else {
                         1.
-                    };
-                    sign * 0.5f64.sqrt()
+                    }
                 } else {
-                    1.
+                    0.0
                 }
-            } else {
-                0.0  
-            }
-        };
+            };
 
-        let transformation_faer = Operator::<Mat<f64>>::get_transformation(&elements_sep, &elements_combined, transformation);
+        let transformation_faer = Operator::<Mat<f64>>::get_transformation(
+            &elements_sep,
+            &elements_combined,
+            transformation,
+        );
 
         let expected = mat![
-            [1.000, 0.000, 0.000],
-            [0.000, 0.707, 0.000],
-            [0.000, 0.707, 0.000],
-            [0.000, 0.000, 1.000],
+            [1.000, 0.000, 0.000, 0.000],
+            [0.000, 0.707, 0.707, 0.000],
+            [0.000, 0.000, 0.000, 1.000],
         ];
 
         assert_matrix_eq!(expected, transformation_faer.backed, comp = abs, tol = 1e-3);
