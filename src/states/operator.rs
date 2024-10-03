@@ -292,7 +292,7 @@ impl<E> Deref for Operator<Array2<E>> {
 mod test {
     use super::Operator;
     use crate::states::{
-        braket::StateBraket, irreducible_states::IrreducibleStates, state_type::StateType, States,
+        braket::StateBraket, irreducible_states::State, state_type::StateType, States,
     };
 
     #[derive(Clone, Copy, Debug, PartialEq)]
@@ -315,9 +315,8 @@ mod test {
             ElementValues::Spin(0),
             ElementValues::Spin(2),
         ];
-        let triplet = IrreducibleStates::new(StateIds::ElectronSpin(2), triplet_elements);
-        let singlet =
-            IrreducibleStates::new(StateIds::ElectronSpin(0), vec![ElementValues::Spin(0)]);
+        let triplet = State::new(StateIds::ElectronSpin(2), triplet_elements);
+        let singlet = State::new(StateIds::ElectronSpin(0), vec![ElementValues::Spin(0)]);
 
         let e_state = StateType::Sum(vec![triplet, singlet]);
         states.push_state(e_state);
@@ -326,8 +325,7 @@ mod test {
             ElementValues::Vibrational(-1),
             ElementValues::Vibrational(-2),
         ];
-        let vib =
-            StateType::Irreducible(IrreducibleStates::new(StateIds::Vibrational, vib_elements));
+        let vib = StateType::Irreducible(State::new(StateIds::Vibrational, vib_elements));
         states.push_state(vib);
 
         states
@@ -497,8 +495,8 @@ mod test {
         }
 
         let mut states_combined = States::default();
-        let singlet = IrreducibleStates::new(Combined::Spin(0), vec![0]);
-        let triplet = IrreducibleStates::new(Combined::Spin(2), vec![-2, 0, 2]);
+        let singlet = State::new(Combined::Spin(0), vec![0]);
+        let triplet = State::new(Combined::Spin(2), vec![-2, 0, 2]);
         states_combined.push_state(StateType::Sum(vec![singlet, triplet]));
 
         let elements_combined = states_combined
@@ -507,8 +505,8 @@ mod test {
             .collect();
 
         let mut states_sep = States::default();
-        let s1 = IrreducibleStates::new(Separated::Spin1(1), vec![-1, 1]);
-        let s2 = IrreducibleStates::new(Separated::Spin2(1), vec![-1, 1]);
+        let s1 = State::new(Separated::Spin1(1), vec![-1, 1]);
+        let s2 = State::new(Separated::Spin2(1), vec![-1, 1]);
 
         states_sep
             .push_state(StateType::Irreducible(s1))

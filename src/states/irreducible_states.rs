@@ -1,21 +1,18 @@
 #[derive(Clone, Debug)]
-pub struct IrreducibleStates<T, V> {
-    pub(crate) state_specific: T,
+pub struct State<T, V> {
+    pub(crate) variant: T,
     pub(crate) basis: Vec<V>,
 }
 
-impl<T: Copy, V: Copy> IrreducibleStates<T, V> {
-    pub fn new(state_specific: T, basis: Vec<V>) -> Self {
+impl<T: Copy, V: Copy> State<T, V> {
+    pub fn new(variant: T, basis: Vec<V>) -> Self {
         assert!(!basis.is_empty(), "0 size basis is not allowed");
 
-        Self {
-            state_specific,
-            basis,
-        }
+        Self { variant, basis }
     }
 }
 
-impl<T, V> IrreducibleStates<T, V> {
+impl<T, V> State<T, V> {
     pub fn size(&self) -> usize {
         self.basis.len()
     }

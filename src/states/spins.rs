@@ -59,10 +59,7 @@ mod test {
 
     use crate::{
         cast_variant,
-        states::{
-            irreducible_states::IrreducibleStates, operator::Operator, state_type::StateType,
-            States,
-        },
+        states::{irreducible_states::State, operator::Operator, state_type::StateType, States},
     };
 
     use super::{DoubleSpin, SpinOperators};
@@ -77,11 +74,11 @@ mod test {
     fn test_spin_ops() {
         let mut state = States::default();
         state
-            .push_state(StateType::Irreducible(IrreducibleStates::new(
+            .push_state(StateType::Irreducible(State::new(
                 StateSep::Spin1(1),
                 vec![-1, 1],
             )))
-            .push_state(StateType::Irreducible(IrreducibleStates::new(
+            .push_state(StateType::Irreducible(State::new(
                 StateSep::Spin2(1),
                 vec![-1, 1],
             )));
@@ -100,7 +97,7 @@ mod test {
 
                 let s1_ket = cast_variant!(s1_braket.ket.0, StateSep::Spin1);
                 let s1_ket = DoubleSpin(s1_ket, s1_braket.ket.1);
-                
+
                 let s2_ket = cast_variant!(s2_braket.ket.0, StateSep::Spin2);
                 let s2_ket = DoubleSpin(s2_ket, s2_braket.ket.1);
 
@@ -117,8 +114,8 @@ mod test {
         assert_matrix_eq!(*op, expected);
 
         let mut combined = States::default();
-        let singlet = IrreducibleStates::new(0, vec![0]);
-        let triplet = IrreducibleStates::new(2, vec![-2, 0, 2]);
+        let singlet = State::new(0, vec![0]);
+        let triplet = State::new(2, vec![-2, 0, 2]);
         combined.push_state(StateType::Sum(vec![singlet, triplet]));
         let basis_comb = combined.get_basis();
 

@@ -4,12 +4,12 @@ use std::{
     slice::Iter,
 };
 
-use super::irreducible_states::IrreducibleStates;
+use super::irreducible_states::State;
 
 #[derive(Clone, Debug)]
 pub enum StateType<T, V> {
-    Irreducible(IrreducibleStates<T, V>),
-    Sum(Vec<IrreducibleStates<T, V>>),
+    Irreducible(State<T, V>),
+    Sum(Vec<State<T, V>>),
 }
 
 impl<T, V> StateType<T, V> {
@@ -42,10 +42,10 @@ impl<T, V> StateType<T, V> {
     pub fn discriminant(&self) -> Option<Discriminant<T>> {
         match self {
             StateType::Irreducible(irreducible_states) => {
-                Some(discriminant(&irreducible_states.state_specific))
+                Some(discriminant(&irreducible_states.variant))
             }
             StateType::Sum(vec) => {
-                let mut iterator = vec.iter().map(|x| discriminant(&x.state_specific));
+                let mut iterator = vec.iter().map(|x| discriminant(&x.variant));
 
                 let first = iterator
                     .next()
@@ -62,7 +62,7 @@ impl<T, V> StateType<T, V> {
 
 pub struct StateTypeIter<'a, T, V> {
     state_type: &'a StateType<T, V>,
-    sum_iter: Peekable<Iter<'a, IrreducibleStates<T, V>>>,
+    sum_iter: Peekable<Iter<'a, State<T, V>>>,
     irreducible_iter: Iter<'a, V>,
 }
 
@@ -71,17 +71,15 @@ impl<'a, T, K> Iterator for StateTypeIter<'a, T, K> {
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.state_type {
-            StateType::Irreducible(s) => {
-                self.irreducible_iter.next().map(|v| (&s.state_specific, v))
-            }
+            StateType::Irreducible(s) => self.irreducible_iter.next().map(|v| (&s.variant, v)),
             StateType::Sum(_) => match self.irreducible_iter.next() {
-                Some(val) => Some((&self.sum_iter.peek().unwrap().state_specific, val)),
+                Some(val) => Some((&self.sum_iter.peek().unwrap().variant, val)),
                 None => {
                     self.sum_iter.next().unwrap();
                     self.sum_iter.peek().and_then(|s| {
                         self.irreducible_iter = s.basis.iter();
 
-                        self.irreducible_iter.next().map(|v| (&s.state_specific, v))
+                        self.irreducible_iter.next().map(|v| (&s.variant, v))
                     })
                 }
             },
