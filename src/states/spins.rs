@@ -1,5 +1,5 @@
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub struct DoubleSpin(u32, i32);
+pub struct DoubleSpin(pub u32, pub i32);
 
 pub struct SpinOperators;
 
