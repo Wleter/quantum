@@ -6,7 +6,7 @@ pub struct SpinOperators;
 impl SpinOperators {
     pub fn proj_z(dspin_bra: DoubleSpin, dspin_ket: DoubleSpin) -> f64 {
         if dspin_bra == dspin_ket {
-            dspin_bra.1 as f64
+            dspin_bra.1 as f64 / 2.0
         } else {
             0.0
         }
@@ -36,11 +36,9 @@ impl SpinOperators {
     ) -> f64 {
         let val1 = Self::proj_z(dspin1_braket.0, dspin1_braket.1)
             * Self::proj_z(dspin2_braket.0, dspin2_braket.1);
-        let val2 = 0.5
-            * Self::ladder_plus(dspin1_braket.0, dspin1_braket.1)
+        let val2 = 0.5 * Self::ladder_plus(dspin1_braket.0, dspin1_braket.1)
             * Self::ladder_minus(dspin2_braket.0, dspin2_braket.1);
-        let val3 = 0.5
-            * Self::ladder_minus(dspin1_braket.0, dspin1_braket.1)
+        let val3 = 0.5 * Self::ladder_minus(dspin1_braket.0, dspin1_braket.1)
             * Self::ladder_plus(dspin2_braket.0, dspin2_braket.1);
 
         val1 + val2 + val3
@@ -106,10 +104,10 @@ mod test {
         );
 
         let expected = mat![
-            [1.0, 0.0, 0.0, 0.0],
-            [0.0, -1.0, 0.5, 0.0],
-            [0.0, 0.5, -1.0, 0.0],
-            [0.0, 0.0, 0.0, 1.0],
+            [0.25, 0.0, 0.0, 0.0],
+            [0.0, -0.25, 0.5, 0.0],
+            [0.0, 0.5, -0.25, 0.0],
+            [0.0, 0.0, 0.0, 0.25],
         ];
         assert_matrix_eq!(*op, expected);
 
