@@ -8,6 +8,12 @@ pub struct Operator<M> {
     backed: M,
 }
 
+impl<M> Operator<M> {
+    pub fn into_backed(self) -> M {
+        self.backed
+    }
+}
+
 /// Cast the expression `value` to the variant `pat` or panic if it is mismatched.
 #[macro_export]
 macro_rules! cast_variant {
@@ -546,6 +552,6 @@ mod test {
             [0.000, 0.000, 0.000, 1.000],
         ];
 
-        assert_matrix_eq!(expected, transformation_faer.backed, comp = abs, tol = 1e-3);
+        assert_matrix_eq!(expected, transformation_faer.into_backed(), comp = abs, tol = 1e-3);
     }
 }
