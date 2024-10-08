@@ -144,6 +144,15 @@ impl<T, V> FromIterator<StatesElement<T, V>> for StatesBasis<T, V> {
     }
 }
 
+impl<T, V> IntoIterator for StatesBasis<T, V> {
+    type Item = StatesElement<T, V>;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
 impl<T, V> Deref for StatesBasis<T, V> {
     type Target = Vec<StatesElement<T, V>>;
 
