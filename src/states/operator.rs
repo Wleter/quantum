@@ -9,6 +9,12 @@ pub struct Operator<M> {
 }
 
 impl<M> Operator<M> {
+    pub fn new(mat: M) -> Self {
+        Self {
+            backed: mat
+        }
+    }
+
     pub fn into_backed(self) -> M {
         self.backed
     }
