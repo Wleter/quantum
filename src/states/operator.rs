@@ -98,6 +98,52 @@ where
     }
 }
 
+fn get_diagonal_mel<'a, const N: usize, T, V, F, E>(
+    elements: &'a StatesBasis<T, V>,
+    action_states: &[T; N],
+    mat_element: F,
+) -> impl Fn(usize, usize) -> E + 'a
+where
+    F: Fn([(T, V); N]) -> E + 'a,
+    T: Copy + PartialEq,
+    V: Copy + PartialEq,
+    E: Zero,
+{
+    let first = elements
+        .first()
+        .unwrap_or_else(|| panic!("0 size states basis")); // same variants for other elements
+
+    let indices = action_states.map(|s| {
+        first
+            .variants
+            .iter()
+            .enumerate()
+            .find(|(_, &x)| discriminant(&x) == discriminant(&s)) // variants are distinct by creation in States
+            .map_or_else(|| panic!("action state not found in elements"), |x| x.0)
+    });
+
+    move |i, j| {
+        if i != j {
+            return E::zero();
+        }
+        
+        unsafe {
+            let elements_i = elements.get_unchecked(i);
+
+            let ket = indices.map(|index| {
+                let ket = (
+                    *elements_i.variants.get_unchecked(index),
+                    *elements_i.values.get_unchecked(index),
+                );
+
+                ket
+            });
+
+            mat_element(ket) // introduce caching
+        }
+    }
+}
+
 fn get_transformation<'a, T1, V1, T2, V2, F, E>(
     elements: &'a StatesBasis<T1, V1>,
     elements_transformed: &'a StatesBasis<T2, V2>,
@@ -135,6 +181,20 @@ impl<E: Entity + Zero> Operator<Mat<E>> {
         F: Fn([StateBraket<T, V>; N]) -> E,
     {
         let mel = get_mel(elements, &action_states, mat_element);
+        let mat = Mat::from_fn(elements.len(), elements.len(), mel);
+
+        Self { backed: mat }
+    }
+
+    pub fn from_diagonal_mel<const N: usize, T: Copy + PartialEq, V: Copy + PartialEq, F>(
+        elements: &StatesBasis<T, V>,
+        action_states: [T; N],
+        mat_element: F,
+    ) -> Self
+    where
+        F: Fn([(T, V); N]) -> E,
+    {
+        let mel = get_diagonal_mel(elements, &action_states, mat_element);
         let mat = Mat::from_fn(elements.len(), elements.len(), mel);
 
         Self { backed: mat }
@@ -182,6 +242,20 @@ impl<E: nalgebra::Scalar + Zero> Operator<DMatrix<E>> {
         F: Fn([StateBraket<T, V>; N]) -> E,
     {
         let mel = get_mel(elements, &action_states, mat_element);
+        let mat = DMatrix::from_fn(elements.len(), elements.len(), mel);
+
+        Self { backed: mat }
+    }
+
+    pub fn from_diagonal_mel<const N: usize, T: Copy + PartialEq, V: Copy + PartialEq, F>(
+        elements: &StatesBasis<T, V>,
+        action_states: [T; N],
+        mat_element: F,
+    ) -> Self
+    where
+        F: Fn([(T, V); N]) -> E,
+    {
+        let mel = get_diagonal_mel(elements, &action_states, mat_element);
         let mat = DMatrix::from_fn(elements.len(), elements.len(), mel);
 
         Self { backed: mat }
@@ -239,6 +313,29 @@ impl<const N: usize, E: nalgebra::Scalar + Zero> Operator<SMatrix<E, N, N>> {
 
         Self { backed: mat }
     }
+
+    pub fn from_diagonal_mel<const M: usize, T: Copy + PartialEq, V: Copy + PartialEq, F>(
+        elements: &StatesBasis<T, V>,
+        action_states: [T; M],
+        mat_element: F,
+    ) -> Self
+    where
+        F: Fn([(T, V); M]) -> E,
+    {
+        assert!(
+            N < 10,
+            "For larger matrices use DMatrix backed matrices instead"
+        );
+        assert!(
+            N == elements.len(),
+            "Elements does not have the same size as static matrix size"
+        );
+
+        let mel = get_diagonal_mel(elements, &action_states, mat_element);
+        let mat = SMatrix::from_fn(mel);
+
+        Self { backed: mat }
+    }
 }
 
 #[cfg(feature = "nalgebra")]
@@ -264,6 +361,20 @@ impl<E: Zero> Operator<Array2<E>> {
         F: Fn([StateBraket<T, V>; N]) -> E,
     {
         let mel = get_mel(elements, &action_states, mat_element);
+        let mat = Array2::from_shape_fn((elements.len(), elements.len()), |(i, j)| mel(i, j));
+
+        Self { backed: mat }
+    }
+    
+    pub fn from_diagonal_mel<const N: usize, T: Copy + PartialEq, V: Copy + PartialEq, F>(
+        elements: &StatesBasis<T, V>,
+        action_states: [T; N],
+        mat_element: F,
+    ) -> Self
+    where
+        F: Fn([(T, V); N]) -> E,
+    {
+        let mel = get_diagonal_mel(elements, &action_states, mat_element);
         let mat = Array2::from_shape_fn((elements.len(), elements.len()), |(i, j)| mel(i, j));
 
         Self { backed: mat }
@@ -419,6 +530,31 @@ mod test {
             [2180.0, 2200.0, 2220.0, 200.0, 0.0, 0.0, 0.0, 0.0],
             [2182.0, 2202.0, 2222.0, 202.0, 0.0, 0.0, 0.0, 0.0],
             [1980.0, 2000.0, 2020.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        ];
+
+        assert_eq!(expected, operator.backed);
+
+        let operator = Operator::<Mat<f64>>::from_diagonal_mel(
+            &elements,
+            [StateIds::ElectronSpin(0), StateIds::Vibrational],
+            |[el_state, vib]| {
+                let spin = cast_variant!(el_state.0, StateIds::ElectronSpin);
+                let spin_z = cast_variant!(el_state.1, ElementValues::Spin);
+                let vib = cast_variant!(vib.1, ElementValues::Vibrational);
+
+                ((spin as i32 * 100 + spin_z) as f64) * (-1.0f64).powi(vib)
+            },
+        );
+
+        let expected = mat![
+            [-198.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, -200.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, -202.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, -0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 198.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 200.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 202.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         ];
 
         assert_eq!(expected, operator.backed);
